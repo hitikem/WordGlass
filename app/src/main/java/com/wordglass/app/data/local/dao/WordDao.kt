@@ -57,6 +57,9 @@ interface WordDao {
     @Insert
     suspend fun insertSession(session: StudySessionEntity): Long
 
+    @Query("SELECT * FROM study_sessions ORDER BY startedAt DESC LIMIT 500")
+    fun observeSessions(): Flow<List<StudySessionEntity>>
+
     @Query("UPDATE learning_states SET isFavorite = :favorite, updatedAt = :now WHERE wordId = :id")
     suspend fun updateFavorite(id: Int, favorite: Boolean, now: Long)
 

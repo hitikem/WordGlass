@@ -9,7 +9,7 @@ WordGlass 是一款 Android 原生英语核心词汇学习应用。视觉目标�
 ## 交付物
 
 - 内测 APK：`dist/WordGlass-0.2.0-beta-debug.apk`
-- SHA-256：`C0FA10D7CBABE57623350CEE1866D92DF3C55C9635E6DA891E1D9338AB2091CF`
+- SHA-256：`3D67C8BBF9DB956D5C280F0C8E9E19764DFA2FC3BE9DBBB80AA3FD44B8815426`
 - 一键安装（手机连接并授权 USB 调试后）：`scripts/install-beta.ps1`
 - 四页截图 + 崩溃日志 + gfxinfo 验收：`scripts/verify-beta.ps1`
 - Debug 包名：`com.wordglass.app.debug`
@@ -25,7 +25,8 @@ WordGlass 是一款 Android 原生英语核心词汇学习应用。视觉目标�
 - 学习模式：卡片翻转、左右滑动、选择题、听写
 - 选择题与听写均写入复习日志；不是“只播动画”
 - 词库：搜索、待复习 / 学习中 / 已掌握 / 错词本 / 收藏筛选、A–Z / 掌握度 / 最近复习排序
-- 首页真实统计：今日完成、待复习、累计学习、已掌握、连续天数、近 7 天节奏
+- 首页真实统计：今日完成、待复习、累计学习、已掌握、连续天数、学习时长、近 7 天节奏
+- 学习会话计时写入 `study_sessions`；离开学习页时落库，不再用 0 分钟假数据
 - 收藏与掌握度持久化，重启不丢
 
 ### 设置与数据安全
@@ -112,7 +113,7 @@ app/build/outputs/apk/debug/app-debug.apk
 
 1. 手机已断开，0.2.0 未做真机安装、启动、滑动流畅度与备份恢复验收。
 2. 云 TTS 未接入：没有 Microsoft Speech Key；当前使用系统 TTS。
-3. “今日学习时长”当前为 0，因为尚未记录会话级计时；不要把它当作真实统计。
+3. 学习时长只统计“进入学习页到离开”的会话；应用被系统杀死时未结束的会话不会补记。
 4. 备份/恢复与词库导入目前是合并写入，不是“清空后覆盖”；恢复前请先导出备份。
 5. PDF/XLSX 直接导入未实现；当前只支持 WordGlass JSON。
 6. 无正式签名、无 release AAB、无应用商店材料。

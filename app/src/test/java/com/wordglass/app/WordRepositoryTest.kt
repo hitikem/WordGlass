@@ -82,6 +82,35 @@ class WordRepositoryTest {
     }
 
     @Test
+    fun studySessionIsRecordedOnlyWithReviews() = runTest {
+        repository.seedIfNeeded()
+        val ended = System.currentTimeMillis()
+        val started = ended - 120_000
+        repository.recordSession(
+            mode = StudyMode.CARD,
+            startedAt = started,
+            endedAt = ended,
+            plannedCount = 20,
+            reviewedCount = 3,
+            correctCount = 2,
+        )
+        val sessions = repository.sessions.first()
+        assertEquals(1, sessions.size)
+        assertEquals(3, sessions.first().reviewedCount)
+        assertEquals(2, sessions.first().correctCount)
+
+        repository.recordSession(
+            mode = StudyMode.CARD,
+            startedAt = ended,
+            endedAt = ended + 5_000,
+            plannedCount = 20,
+            reviewedCount = 0,
+            correctCount = 0,
+        )
+        assertEquals(1, repository.sessions.first().size)
+    }
+
+    @Test
     fun againSchedulesTenMinutes() = runTest {
         repository.seedIfNeeded()
         repository.submitRating(1, StudyRating.AGAIN, StudyMode.CARD)

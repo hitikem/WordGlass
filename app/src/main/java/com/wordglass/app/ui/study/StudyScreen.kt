@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -74,6 +75,11 @@ fun StudyScreen(
     val word = words.getOrNull(state.index)
     val total = words.size
     val colors = WgTheme.colors
+
+    DisposableEffect(Unit) {
+        vm.onStudyVisible()
+        onDispose { vm.onStudyHidden() }
+    }
 
     LaunchedEffect(word?.id, autoPlay, state.mode) {
         if (autoPlay && word != null && !state.finished &&

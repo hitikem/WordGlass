@@ -6,6 +6,7 @@ import androidx.annotation.WorkerThread
 import com.wordglass.app.data.local.dao.WordDao
 import com.wordglass.app.data.local.entity.LearningStateEntity
 import com.wordglass.app.data.local.entity.ReviewLogEntity
+import com.wordglass.app.data.local.entity.StudySessionEntity
 import com.wordglass.app.data.local.entity.WordEntity
 import com.wordglass.app.model.StudyMode
 import com.wordglass.app.model.StudyRating
@@ -23,6 +24,8 @@ class WordRepository(
     private val dao: WordDao,
     private val context: Context,
 ) {
+    val sessions: Flow<List<StudySessionEntity>> = dao.observeSessions()
+
     val words: Flow<List<Word>> = combine(
         dao.observeWords(),
         dao.observeStates(),
@@ -95,6 +98,27 @@ class WordRepository(
 
     suspend fun bumpWrong(id: Int) {
         dao.bumpWrong(id, System.currentTimeMillis())
+    }
+
+    suspend fun recordSession(
+        mode: StudyMode,
+        startedAt: Long,
+        endedAt: Long,
+        plannedCount: Int,
+        reviewedCount: Int,
+        correctCount: Int,
+    ) {
+        if (endedAt <= startedAt || reviewedCount <= 0) return
+        dao.insertSession(
+            StudySessionEntity(
+                mode = mode.name,
+                startedAt = startedAt,
+                endedAt = endedAt,
+                plannedCount = plannedCount,
+                reviewedCount = reviewedCount,
+                correctCount = correctCount,
+            ),
+        )
     }
 
     /**

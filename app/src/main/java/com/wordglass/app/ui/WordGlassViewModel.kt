@@ -19,6 +19,8 @@ import com.wordglass.app.model.Word
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlin.math.ceil
+import kotlin.math.max
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -112,7 +114,7 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
         initialValue = emptyList(),
     )
 
-    val dashboard: StateFlow<DashboardStats> = _words.map { words ->
+    val dashboard: StateFlow<DashboardStats> = combine(_words, repository.sessions) { words, sessions ->
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now(zone)
         val dayStart = today.atStartOfDay(zone).toInstant().toEpochMilli()
@@ -125,14 +127,15 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
             streak += 1
             streakCursor = streakCursor.minusDays(1)
         }
-        val week = (6 downTo 0).map { offset ->
-            val day = today.minusDays(offset.toLong())
-            words.count {
-                it.lastReviewedAt?.let { ts ->
-                    Instant.ofEpochMilli(ts).atZone(zone).toLocalDate() == day
-                } == true
-            }
+        fun sessionMinutesFor(day: LocalDate): Int {
+            val start = day.atStartOfDay(zone).toInstant().toEpochMilli()
+            val end = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+            val millis = sessions
+                .filter { it.startedAt >= start && it.startedAt < end && it.endedAt != null }
+                .sumOf { (it.endedAt!! - it.startedAt).coerceAtLeast(0L) }
+            return if (millis <= 0L) 0 else ceil(millis / 60_000.0).toInt()
         }
+        val week = (6 downTo 0).map { offset -> sessionMinutesFor(today.minusDays(offset.toLong())) }
         DashboardStats(
             dailyGoal = 25,
             completedToday = words.count { (it.lastReviewedAt ?: 0L) >= dayStart },
@@ -140,7 +143,7 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
             totalLearned = words.count { it.reviewCount > 0 },
             mastered = words.count { it.mastery >= 4 },
             streakDays = streak,
-            minutesToday = 0,
+            minutesToday = sessionMinutesFor(today),
             weeklyMinutes = week,
         )
     }.stateIn(
@@ -166,9 +169,52 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    private var sessionStartedAt: Long? = null
+    private var sessionKnownAtStart: Int = 0
+    private var sessionUnknownAtStart: Int = 0
+
     fun wordOf(id: Int): Word? = _words.value.firstOrNull { it.id == id }
 
     fun studyWord(): Word? = _words.value.getOrNull(_study.value.index)
+
+    fun onStudyVisible() {
+        if (sessionStartedAt != null) return
+        val state = _study.value
+        sessionStartedAt = System.currentTimeMillis()
+        sessionKnownAtStart = state.knownCount
+        sessionUnknownAtStart = state.unknownCount
+    }
+
+    fun onStudyHidden() {
+        finishSession()
+    }
+
+    override fun onCleared() {
+        finishSession()
+        super.onCleared()
+    }
+
+    private fun finishSession() {
+        val startedAt = sessionStartedAt ?: return
+        sessionStartedAt = null
+        val endedAt = System.currentTimeMillis()
+        if (endedAt - startedAt < 5_000L) return
+        val state = _study.value
+        val reviewed = (state.knownCount + state.unknownCount) -
+            (sessionKnownAtStart + sessionUnknownAtStart)
+        if (reviewed <= 0) return
+        val correct = max(0, state.knownCount - sessionKnownAtStart)
+        container.scope.launch {
+            repository.recordSession(
+                mode = state.mode,
+                startedAt = startedAt,
+                endedAt = endedAt,
+                plannedCount = state.total,
+                reviewedCount = reviewed,
+                correctCount = correct,
+            )
+        }
+    }
 
     fun setMode(mode: StudyMode) {
         _study.update {
@@ -273,6 +319,8 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
                 dictationChecked = false,
                 dictationCorrect = null,
                 flipped = false,
+                knownCount = it.knownCount + if (state.choiceCorrect == true) 1 else 0,
+                unknownCount = it.unknownCount + if (state.choiceCorrect == false) 1 else 0,
             )
         }
     }
