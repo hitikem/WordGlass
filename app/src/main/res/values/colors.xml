@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="wordglass_window_bg">#F4F8FF</color>
+    <color name="wordglass_brand_navy">#07142C</color>
+    <color name="wordglass_brand_blue">#2F6BFF</color>
+</resources>
