@@ -16,4 +16,5 @@ secrets.properties
 *.hprof
 *.log
 dist/
+docs/device-evidence/
 scripts/__pycache__/

@@ -11,6 +11,7 @@ WordGlass 是一款 Android 原生英语核心词汇学习应用。视觉目标�
 - 内测 APK：`dist/WordGlass-0.2.0-beta-debug.apk`
 - SHA-256：`C0FA10D7CBABE57623350CEE1866D92DF3C55C9635E6DA891E1D9338AB2091CF`
 - 一键安装（手机连接并授权 USB 调试后）：`scripts/install-beta.ps1`
+- 四页截图 + 崩溃日志 + gfxinfo 验收：`scripts/verify-beta.ps1`
 - Debug 包名：`com.wordglass.app.debug`
 - 正式包名：`com.wordglass.app`
 
