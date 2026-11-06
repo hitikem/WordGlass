@@ -54,7 +54,7 @@ import com.wordglass.app.core.design.WgMotion
 import com.wordglass.app.core.design.WgSpace
 import com.wordglass.app.core.design.WgTheme
 import com.wordglass.app.core.design.WgType
-import com.wordglass.app.data.PrototypeSpeaker
+import com.wordglass.app.data.speech.SpeechService
 import com.wordglass.app.model.StudyMode
 import com.wordglass.app.model.Word
 import com.wordglass.app.ui.StudyUiState
@@ -64,7 +64,7 @@ import com.wordglass.app.ui.WordGlassViewModel
 fun StudyScreen(
     backdrop: PrismalBackdrop,
     vm: WordGlassViewModel,
-    speaker: PrototypeSpeaker,
+    speaker: SpeechService,
     autoPlay: Boolean,
     onSpeak: (String) -> Unit,
     modifier: Modifier = Modifier,

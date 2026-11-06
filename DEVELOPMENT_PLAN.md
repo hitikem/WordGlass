@@ -47,7 +47,7 @@ WordGlass 已经不是“只有 UI 的空壳”。
 | 4 | 学习模式、SM-2、复习日志 | 完成 |
 | 5 | 设置持久化、真实统计 | 完成 |
 | 6 | 备份 / 恢复 / JSON 导入 | 完成（合并写入） |
-| 7 | 云 TTS、音频缓存 | **未完成**（缺凭证） |
+| 7 | 云 TTS、音频缓存 | **框架完成，云供应商未接入**（缺凭证） |
 | 8 | 真机验收、性能、签名、发布 | **进行中 / 阻塞于设备** |
 
 ---
@@ -129,9 +129,19 @@ WordGlass 已经不是“只有 UI 的空壳”。
 
 ### 优先级 P1 — 云 TTS
 
+已完成：
+
+- `SpeechService` 接口
+- `SystemSpeechService`（离线回退）
+- `AudioCache`：SHA-256 内容寻址、32 MB 上限、原子写入、按修改时间修剪
+- UI 只依赖 `SpeechService`，不依赖具体引擎
+
+待完成：
+
 - 确认 Microsoft Azure Speech Key / Region
 - 通过服务端或构建期注入，不把长期密钥写入 APK
-- 实现 `SpeechService` + MP3 缓存 + 失败回退系统 TTS
+- 实现 `AzureSpeechService` 并复用 `AudioCache`
+- 失败时回退系统 TTS
 - 先用单词级音频，例句音频后续
 
 ### 优先级 P2 — 发布准备

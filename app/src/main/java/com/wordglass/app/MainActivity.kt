@@ -38,7 +38,7 @@ import com.wordglass.app.core.components.AmbientBackground
 import com.wordglass.app.core.components.GlassBottomBar
 import com.wordglass.app.core.design.WgTheme
 import com.wordglass.app.core.design.WordGlassTheme
-import com.wordglass.app.data.rememberPrototypeSpeaker
+import com.wordglass.app.data.rememberSystemSpeechService
 import com.wordglass.app.model.ThemeMode
 import com.wordglass.app.ui.LocalGlassBackdrop
 import com.wordglass.app.ui.WordGlassViewModel
@@ -77,7 +77,7 @@ fun WordGlassApp(
         it == Routes.HOME || it == Routes.STUDY || it == Routes.LIBRARY || it == Routes.PROFILE
     } ?: Routes.HOME
     val settings by vm.settings.collectAsStateWithLifecycle()
-    val speaker = rememberPrototypeSpeaker(settings.voice, settings.speechRate)
+    val speaker = rememberSystemSpeechService(settings.voice, settings.speechRate)
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: Routes.HOME

@@ -11,17 +11,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.wordglass.app.data.speech.SpeechService
 import com.wordglass.app.model.VoiceGender
 import java.util.Locale
 
 /**
- * Temporary prototype speaker using the device TTS engine.
+ * Device TTS implementation of [SpeechService].
  *
- * Production will use the isolated SpeechService backed by Microsoft/Aliyun. Keeping this class
- * behind a tiny speak() API means screens never contain provider-specific code and replacing it
- * later will not touch the UI.
+ * It is the offline fallback and the current internal-beta provider. A cloud provider can be
+ * swapped in without changing any screen because this class is the only engine-specific code.
  */
-class PrototypeSpeaker(context: Context) : TextToSpeech.OnInitListener {
+class SystemSpeechService(context: Context) :
+    TextToSpeech.OnInitListener,
+    SpeechService {
 
     private var tts: TextToSpeech? = null
     private var pendingGender: VoiceGender = VoiceGender.FEMALE
@@ -53,17 +55,17 @@ class PrototypeSpeaker(context: Context) : TextToSpeech.OnInitListener {
         tts?.setSpeechRate(rate)
     }
 
-    fun speak(text: String) {
+    override fun speak(text: String) {
         val engine = tts ?: return
         if (!isReady) return
         engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "wordglass-${text.hashCode()}")
     }
 
-    fun stop() {
+    override fun stop() {
         tts?.stop()
     }
 
-    fun shutdown() {
+    override fun shutdown() {
         isReady = false
         tts?.stop()
         tts?.shutdown()
@@ -98,9 +100,9 @@ class PrototypeSpeaker(context: Context) : TextToSpeech.OnInitListener {
 }
 
 @Composable
-fun rememberPrototypeSpeaker(gender: VoiceGender, rate: Float): PrototypeSpeaker {
+fun rememberSystemSpeechService(gender: VoiceGender, rate: Float): SpeechService {
     val context = LocalContext.current
-    val speaker = remember { PrototypeSpeaker(context.applicationContext) }
+    val speaker = remember { SystemSpeechService(context.applicationContext) }
     LaunchedEffect(gender) { speaker.setGender(gender) }
     LaunchedEffect(rate) { speaker.setRate(rate) }
     DisposableEffect(Unit) {

@@ -9,7 +9,7 @@ WordGlass 是一款 Android 原生英语核心词汇学习应用。视觉目标�
 ## 交付物
 
 - 内测 APK：`dist/WordGlass-0.2.0-beta-debug.apk`
-- SHA-256：`CF3CB624468DF12CFDB4B72C670AE70DEF682AAF5BE7AF84EFC5007C180EC783`
+- SHA-256：`C0FA10D7CBABE57623350CEE1866D92DF3C55C9635E6DA891E1D9338AB2091CF`
 - 一键安装（手机连接并授权 USB 调试后）：`scripts/install-beta.ps1`
 - Debug 包名：`com.wordglass.app.debug`
 - 正式包名：`com.wordglass.app`
@@ -41,7 +41,9 @@ WordGlass 是一款 Android 原生英语核心词汇学习应用。视觉目标�
 - 真实 PrismalAGSL 玻璃只保留在首页 Hero 与底栏透镜；其余卡片使用静态磨砂层，降低滚动/拖拽掉帧
 - 导航拖拽只更新布局/图形层，避免每帧重组整页
 - Manrope 英文字体；蓝白固定品牌色；浅色 / 深色 / 跟随系统
-- 系统 TTS 临时发音；屏幕代码不依赖具体云厂商
+- 可替换 `SpeechService` 边界；当前 `SystemSpeechService` 使用系统 TTS
+- 32 MB 内容寻址 `AudioCache`（SHA-256 key、原子写入、LRU 修剪）；供云 TTS 复用，当前未产生云音频
+- 屏幕代码不依赖具体语音厂商；云 TTS 仍需服务端短期令牌
 
 ## 词库事实
 

@@ -62,6 +62,12 @@ Dependency versions are managed by `androidx.compose:compose-bom:2026.06.01`.
 
 Copyright JetBrains s.r.o., licensed under Apache License 2.0.
 
+## Speech / audio
+
+- Current provider: Android platform `TextToSpeech` (device engine), no cloud audio is downloaded.
+- `AudioCache` is first-party code and stores only provider audio when a cloud provider is enabled.
+- No Microsoft or Alibaba credentials are embedded.
+
 ## AndroidX Room / DataStore
 
 Copyright The Android Open Source Project, licensed under Apache License 2.0.
