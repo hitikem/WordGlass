@@ -8,12 +8,25 @@ WordGlass 是一款 Android 原生英语核心词汇学习应用。视觉目标�
 
 ## 交付物
 
-- 内测 APK：`dist/WordGlass-0.2.0-beta-debug.apk`
-- SHA-256：`3D67C8BBF9DB956D5C280F0C8E9E19764DFA2FC3BE9DBBB80AA3FD44B8815426`
+- 内测 APK：`dist/WordGlass-0.3.0-editorial-debug.apk`
+- SHA-256：`D38D397260A28A5470CC75FC770A8E457C3D79E0CCE449B6DB7EAD7B0B442717`
 - 一键安装（手机连接并授权 USB 调试后）：`scripts/install-beta.ps1`
 - 四页截图 + 崩溃日志 + gfxinfo 验收：`scripts/verify-beta.ps1`
 - Debug 包名：`com.wordglass.app.debug`
 - 正式包名：`com.wordglass.app`
+
+## 0.3.0 视觉重构（Apple Minimalism × Editorial）
+
+v0.2 的蓝色液态玻璃方向已按要求整体弃用。
+
+- 色彩：暖白 `#F7F6F2`、卡片白 `#FFFFFF`、墨 `#20211F`、次级 `#85847E`、分割线 `#EAE8E1`、橄榄绿 `#687653`、暖橙 `#D98B59`；深色 `#171816` / `#242622`
+- 移除：整屏蓝色渐变、大量玻璃拟态、彩色发光、浮动胶囊导航
+- 首页：杂志式封面排版，单一墨色进度块承载最重要的数字，其余用细线分隔
+- 背单词：词典式大字号单词 + IPA + 释义 + 例句分层，翻转/滑动/选择/听写四种模式不变
+- 复习：极简单行列表（单词、音标、掌握状态、收藏），不再是复杂卡片
+- 我的：分组设置行，缩小图标、去掉彩色强调
+- 导航：原生底部栏 + 细线 + 滑动选中药丸，不再悬浮玻璃
+- 性能：删除整屏 `prismalGlassLayer`（每帧录制整屏），首帧从 4950ms 降到 250ms
 
 ## 已实现
 

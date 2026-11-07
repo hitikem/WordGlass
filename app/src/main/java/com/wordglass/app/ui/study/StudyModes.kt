@@ -224,98 +224,112 @@ private fun CardFront(
     onFavorite: () -> Unit,
 ) {
     val colors = WgTheme.colors
-    GlassCard(
-        backdrop = com.wordglass.app.ui.LocalGlassBackdrop.current,
-        modifier = Modifier.fillMaxSize(),
-        cornerRadius = WgRadius.large,
-        contentPadding = PaddingValues(0.dp),
-        elevation = 18.dp,
-        overlay = Brush.linearGradient(
-            listOf(
-                colors.blue.copy(alpha = if (colors.isDark) 0.13f else 0.055f),
-                Color.Transparent,
-                colors.cyan.copy(alpha = 0.05f),
-            ),
-        ),
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(WgRadius.hero))
+            .background(colors.surface)
+            .border(1.dp, colors.divider, RoundedCornerShape(WgRadius.hero))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onFlip,
+            )
+            .padding(horizontal = 26.dp, vertical = 22.dp),
     ) {
-        Box(Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(onClick = onFlip)
-                    .padding(22.dp),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(colors.blue.copy(alpha = 0.10f))
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(
-                            Modifier
-                                .size(5.dp)
-                                .clip(CircleShape)
-                                .background(colors.blue),
-                        )
-                        Spacer(Modifier.size(6.dp))
-                        Text(
-                            text = "CORE ${position.toString().padStart(2, '0')}",
-                            style = WgType.eyebrow,
-                            color = colors.blue,
-                            fontSize = 8.sp,
-                        )
-                    }
-                    Spacer(Modifier.weight(1f))
-                    BookmarkButton(word.favorite, onFavorite)
-                }
-                Spacer(Modifier.weight(1f))
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = word.word,
-                        style = WgType.wordHero,
-                        color = colors.ink,
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(7.dp))
-                    Text(
-                        text = word.phonetic,
-                        style = WgType.phonetic,
-                        color = colors.inkSecondary,
-                    )
-                    Spacer(Modifier.height(20.dp))
-                    AudioOrb(
-                        onSpeak = { onSpeak(word.word) },
-                    )
-                }
-                Spacer(Modifier.weight(1f))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "轻触卡片查看释义",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colors.inkTertiary,
-                    )
-                    Spacer(Modifier.size(5.dp))
-                    Icon(
-                        Icons.Rounded.TouchApp,
-                        contentDescription = null,
-                        tint = colors.inkTertiary,
-                        modifier = Modifier.size(14.dp),
-                    )
-                }
-            }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "NO.${position.toString().padStart(3, '0')}",
+                style = WgType.eyebrow,
+                color = colors.inkTertiary,
+            )
+            Spacer(Modifier.weight(1f))
+            BookmarkButton(word.favorite, onFavorite)
         }
+
+        Spacer(Modifier.weight(1f))
+
+        Text(
+            text = word.word,
+            style = WgType.wordHero,
+            color = colors.ink,
+            fontSize = 46.sp,
+            lineHeight = 50.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        if (word.phonetic.isNotBlank()) {
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = "/${word.phonetic}/",
+                style = WgType.phonetic,
+                color = colors.inkSecondary,
+                fontSize = 15.sp,
+            )
+        }
+
+        Spacer(Modifier.height(18.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SpeakButton(onSpeak = { onSpeak(word.word) })
+            Spacer(Modifier.size(10.dp))
+            Text(
+                text = "美式发音",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.inkTertiary,
+            )
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(colors.divider),
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "轻触卡片查看释义",
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.inkTertiary,
+        )
+    }
+}
+
+@Composable
+private fun SpeakButton(onSpeak: () -> Unit) {
+    val colors = WgTheme.colors
+    val haptics = LocalHapticFeedback.current
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .border(1.dp, colors.divider, RoundedCornerShape(50))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onSpeak()
+                },
+            )
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.VolumeUp,
+            contentDescription = "播放发音",
+            tint = colors.ink,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(Modifier.size(6.dp))
+        Text(
+            text = "发音",
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.ink,
+        )
     }
 }
 
@@ -326,19 +340,12 @@ private fun CardBack(
     onFavorite: () -> Unit,
 ) {
     val colors = WgTheme.colors
-    GlassCard(
-        backdrop = com.wordglass.app.ui.LocalGlassBackdrop.current,
-        modifier = Modifier.fillMaxSize(),
-        cornerRadius = WgRadius.large,
-        contentPadding = PaddingValues(0.dp),
-        elevation = 18.dp,
-        overlay = Brush.linearGradient(
-            listOf(
-                colors.glassStrongFill.copy(alpha = 0.18f),
-                Color.Transparent,
-                colors.blue.copy(alpha = 0.04f),
-            ),
-        ),
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(WgRadius.hero))
+            .background(colors.surface)
+            .border(1.dp, colors.divider, RoundedCornerShape(WgRadius.hero)),
     ) {
         Column(
             modifier = Modifier
@@ -387,7 +394,7 @@ private fun CardBack(
                             .padding(top = 3.dp)
                             .size(width = 2.dp, height = 42.dp)
                             .clip(RoundedCornerShape(50))
-                            .background(colors.blue.copy(alpha = 0.30f)),
+                            .background(colors.ink.copy(alpha = 0.22f)),
                     )
                     Spacer(Modifier.size(11.dp))
                     Column {
@@ -1301,3 +1308,5 @@ private fun MissingWord(modifier: Modifier = Modifier) {
         )
     }
 }
+
+

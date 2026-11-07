@@ -15,7 +15,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface WordDao {
 
-    @Query("SELECT * FROM words ORDER BY sourceNumber, word")
+    @Query(
+        "SELECT * FROM words ORDER BY " +
+            "CASE WHEN sourceNumber IS NULL THEN 1 ELSE 0 END, sourceNumber, id",
+    )
     fun observeWords(): Flow<List<WordEntity>>
 
     @Query("SELECT * FROM learning_states")
@@ -27,7 +30,10 @@ interface WordDao {
     @Query("SELECT COUNT(*) FROM review_logs")
     suspend fun reviewLogCount(): Int
 
-    @Query("SELECT * FROM words ORDER BY id")
+    @Query(
+        "SELECT * FROM words ORDER BY " +
+            "CASE WHEN sourceNumber IS NULL THEN 1 ELSE 0 END, sourceNumber, id",
+    )
     suspend fun allWords(): List<WordEntity>
 
     @Query("SELECT * FROM learning_states")

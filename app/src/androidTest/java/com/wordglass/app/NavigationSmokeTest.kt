@@ -22,7 +22,7 @@ class NavigationSmokeTest {
         composeRule.onNodeWithText("Alex Chen").assertIsDisplayed()
 
         composeRule.onNodeWithTag("tab_study").performClick()
-        composeRule.onNodeWithText("experience").assertIsDisplayed()
+        composeRule.onNodeWithText("把注意力放在眼前这一个词上。").assertIsDisplayed()
 
         composeRule.onNodeWithTag("tab_library").performClick()
         composeRule.onNodeWithText("所有词，都在一个清晰的视图里。").assertIsDisplayed()

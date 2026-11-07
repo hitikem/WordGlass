@@ -79,7 +79,7 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
     private val _filter = MutableStateFlow(LibraryFilter.ALL)
     val filter: StateFlow<LibraryFilter> = _filter.asStateFlow()
 
-    private val _sort = MutableStateFlow(LibrarySort.ALPHABETICAL)
+    private val _sort = MutableStateFlow(LibrarySort.SOURCE)
     val sort: StateFlow<LibrarySort> = _sort.asStateFlow()
 
     val visibleWords: StateFlow<List<Word>> = combine(
@@ -104,6 +104,9 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
             matchesQuery && matchesFilter
         }
         when (sort) {
+            LibrarySort.SOURCE -> filtered.sortedWith(
+                compareBy<Word> { it.sourceNumber ?: Int.MAX_VALUE }.thenBy { it.id },
+            )
             LibrarySort.ALPHABETICAL -> filtered.sortedBy { it.word.lowercase() }
             LibrarySort.MASTERY -> filtered.sortedByDescending { it.mastery }
             LibrarySort.RECENT -> filtered.sortedByDescending { it.lastReviewedAt ?: 0L }

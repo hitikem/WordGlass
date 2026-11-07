@@ -67,6 +67,7 @@ enum class LibraryFilter(val label: String) {
 }
 
 enum class LibrarySort(val label: String) {
+    SOURCE("PDF 顺序"),
     ALPHABETICAL("A–Z"),
     MASTERY("掌握度"),
     RECENT("最近复习"),

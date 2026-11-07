@@ -107,7 +107,7 @@ fun ProfileScreen(
                 Text(
                     text = "PROFILE",
                     style = WgType.eyebrow,
-                    color = colors.blue,
+                    color = colors.inkTertiary,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
@@ -509,10 +509,10 @@ private fun SettingsRow(
                 indication = null,
                 onClick = { onClick?.invoke() },
             )
-            .padding(horizontal = 15.dp, vertical = 13.dp),
+            .padding(horizontal = 16.dp, vertical = 15.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconCircle(icon = icon, tint = colors.blue, size = 34.dp)
+        IconCircle(icon = icon, tint = colors.inkSecondary, size = 30.dp)
         Spacer(Modifier.size(11.dp))
         Column(Modifier.weight(1f)) {
             Text(
@@ -549,7 +549,7 @@ private fun SettingBlock(
     val colors = WgTheme.colors
     Column(Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 13.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconCircle(icon = icon, tint = colors.blue, size = 34.dp)
+            IconCircle(icon = icon, tint = colors.inkSecondary, size = 30.dp)
             Spacer(Modifier.size(11.dp))
             Column {
                 Text(
@@ -642,3 +642,4 @@ private fun DailyGoalDialog(
         },
     )
 }
+

@@ -1,11 +1,14 @@
 package com.wordglass.app
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -51,6 +54,11 @@ import java.time.LocalDate
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            // Debug-only device acceptance aid: wake the panel and show over the keyguard.
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        }
         enableEdgeToEdge()
         val debugStart = if (BuildConfig.DEBUG) {
             intent.getStringExtra("wordglass_start")
@@ -101,24 +109,22 @@ fun WordGlassApp(
             settings.themeMode == ThemeMode.DARK
         CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
             Box(Modifier.fillMaxSize()) {
-                AmbientBackground(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .prismalGlassLayer(backdrop),
-                )
+                // Plain paper background. The whole-screen glass capture layer is gone: it
+                // recorded every frame and cost ~4s on the first traversal.
+                AmbientBackground(modifier = Modifier.fillMaxSize())
                 NavHost(
                     navController = navController,
                     startDestination = safeStart,
                     modifier = Modifier.fillMaxSize(),
                     enterTransition = {
-                        fadeIn(tween(360)) + slideInHorizontally(tween(430)) { it / 12 }
+                        fadeIn(tween(320)) + slideInHorizontally(tween(380)) { it / 14 }
                     },
-                    exitTransition = { fadeOut(tween(180)) },
+                    exitTransition = { fadeOut(tween(150)) },
                     popEnterTransition = {
-                        fadeIn(tween(300)) + slideInHorizontally(tween(360)) { -it / 12 }
+                        fadeIn(tween(280)) + slideInHorizontally(tween(330)) { -it / 14 }
                     },
                     popExitTransition = {
-                        fadeOut(tween(170)) + slideOutHorizontally(tween(300)) { it / 14 }
+                        fadeOut(tween(140)) + slideOutHorizontally(tween(260)) { it / 16 }
                     },
                 ) {
                     composable(Routes.HOME) {
@@ -182,21 +188,7 @@ fun WordGlassApp(
                         )
                     }
                 }
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .height(150.dp)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(
-                                    Color.Transparent,
-                                    WgTheme.colors.background.copy(alpha = 0.90f),
-                                    WgTheme.colors.background,
-                                ),
-                            ),
-                        ),
-                )
+                // Bottom navigation sits on the page background; no scrim, no floating glass.
                 GlassBottomBar(
                     selectedRoute = currentRoute,
                     onSelect = { navController.navigateTab(it) },
