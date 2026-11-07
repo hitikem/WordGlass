@@ -21,11 +21,13 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -111,7 +113,7 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
             LibrarySort.MASTERY -> filtered.sortedByDescending { it.mastery }
             LibrarySort.RECENT -> filtered.sortedByDescending { it.lastReviewedAt ?: 0L }
         }
-    }.stateIn(
+    }.flowOn(Dispatchers.Default).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = emptyList(),
@@ -149,14 +151,14 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
             minutesToday = sessionMinutesFor(today),
             weeklyMinutes = week,
         )
-    }.stateIn(
+    }.flowOn(Dispatchers.Default).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = PreviewData.dashboard.copy(completedToday = 0, dueCount = 0, totalLearned = 0, mastered = 0, streakDays = 0, weeklyMinutes = List(7) { 0 }),
     )
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             repository.words.collect { list ->
                 _words.value = list
                 _study.update { state ->
@@ -438,3 +440,4 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 }
+

@@ -17,6 +17,7 @@ import kotlin.math.min
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
@@ -26,6 +27,10 @@ class WordRepository(
 ) {
     val sessions: Flow<List<StudySessionEntity>> = dao.observeSessions()
 
+    /**
+     * Entity -> domain mapping for 882+ rows must never run on the main thread: it used to be
+     * collected by viewModelScope (Main.immediate) and caused multi-second frames.
+     */
     val words: Flow<List<Word>> = combine(
         dao.observeWords(),
         dao.observeStates(),
@@ -33,13 +38,12 @@ class WordRepository(
         val stateById = states.associateBy { it.wordId }
         val now = System.currentTimeMillis()
         entities.map { entity ->
-            val state = stateById[entity.id]
             entity.toDomain(
-                state = state,
+                state = stateById[entity.id],
                 now = now,
             )
         }
-    }
+    }.flowOn(Dispatchers.Default)
 
     @WorkerThread
     suspend fun seedIfNeeded() = withContext(Dispatchers.IO) {
@@ -236,3 +240,4 @@ private fun JSONObject.optStringOrNull(key: String): String? {
     if (!has(key) || isNull(key)) return null
     return optString(key).trim().takeIf { it.isNotEmpty() }
 }
+

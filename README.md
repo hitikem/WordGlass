@@ -9,7 +9,7 @@ WordGlass 是一款 Android 原生英语核心词汇学习应用。视觉目标�
 ## 交付物
 
 - 内测 APK：`dist/WordGlass-0.3.0-editorial-debug.apk`
-- SHA-256：`D38D397260A28A5470CC75FC770A8E457C3D79E0CCE449B6DB7EAD7B0B442717`
+- SHA-256：`FD5D9CA85EFB76F2C38CABC733FFF66DBE6C4A352B32F77187D4F3F440E6D32E`
 - 一键安装（手机连接并授权 USB 调试后）：`scripts/install-beta.ps1`
 - 四页截图 + 崩溃日志 + gfxinfo 验收：`scripts/verify-beta.ps1`
 - Debug 包名：`com.wordglass.app.debug`
@@ -27,6 +27,8 @@ v0.2 的蓝色液态玻璃方向已按要求整体弃用。
 - 我的：分组设置行，缩小图标、去掉彩色强调
 - 导航：原生底部栏 + 细线 + 滑动选中药丸，不再悬浮玻璃
 - 性能：删除整屏 `prismalGlassLayer`（每帧录制整屏），首帧从 4950ms 降到 250ms
+- 性能：`WordRepository.words` / `visibleWords` / `dashboard` 全部 `flowOn(Dispatchers.Default)`，882 条实体的映射不再占用主线程（此前列表滚动有 2.7s 尖峰，修后 90 分位 89ms）
+- 图标：由源图 `IMG_20261107_130922.png` 提取手写 W 字形，改为暖纸底 `#F7F6F2` + 墨色 `#20211F`，输出自适应图标（含 monochrome）与 5 档 mipmap
 
 ## 已实现
 
