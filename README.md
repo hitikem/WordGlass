@@ -96,6 +96,40 @@ android.newDsl=false
 
 并显式应用 `org.jetbrains.kotlin.android`。这是可工作的过渡方案；AGP 10 前需要迁移回内置 Kotlin 或替换代码生成方案。
 
+## 虚拟机
+
+两个 AVD，配置均已针对本机调优（720×1600 @320dpi、3 GB RAM、4 核、GPU 开启）。只用命令行 SDK tools，**不需要 Android Studio**。
+
+| AVD | 系统 | 状态 |
+|---|---|---|
+| `WordGlass_API35` | Android 15 / API 35 | ✅ 可用，四页与新图标均已验证 |
+| `WordGlass_API37_Play` | Android 17 / API 37（Google Play 官方镜像） | ❌ 系统级崩溃，暂不可用 |
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\emu.ps1 -Start api35
+powershell -ExecutionPolicy Bypass -File scripts\emu.ps1 -Status
+powershell -ExecutionPolicy Bypass -File scripts\emu.ps1 -Stop
+```
+
+### 为什么 Android 17 模拟器跑不起来
+
+两个镜像（AOSP `google_apis` 与 Google Play `google_apis_playstore`）都在系统层崩溃，应用尚未启动：
+
+```text
+Assertion failed: !rcEnc->featureInfo()->hasReadColorBufferDma
+/system/bin/surfaceflinger (RegionSamplingThread)
+/vendor/lib64/hw/mapper.ranchu.so (GoldfishMapper::readFromHost)
+```
+
+- `-gpu host`：`DisplaySurfaceGlContextHelper context was preempted by others`
+  （本机有 4 个显示适配器：Intel UHD、NVIDIA 930MX、OrayIddDriver、GameViewer）
+- `-gpu swiftshader_indirect`：SurfaceFlinger 区域采样线程 SIGABRT
+
+这是**模拟器图形栈缺陷，与 WordGlass 无关**。Android 17 / API 37 的行为改为在真机
+（REDMI K80，Android 17 / API 37）验证。
+
+模拟器走软件 GL（`ro.hardware.egl = emulation`），系统设置页空转也掉帧，属模拟器自身上限。
+
 ## 构建
 
 ```powershell

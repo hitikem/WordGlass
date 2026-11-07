@@ -22,3 +22,6 @@ scripts/__pycache__/
 build-icon-*.npy
 build-icon-*.png
 build-w-mask.png
+
+docs/emu-*.log
+docs/emu-*.log.err
