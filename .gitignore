@@ -18,3 +18,7 @@ secrets.properties
 dist/
 docs/device-evidence/
 scripts/__pycache__/
+
+build-icon-*.npy
+build-icon-*.png
+build-w-mask.png
