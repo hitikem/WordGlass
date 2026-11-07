@@ -27,3 +27,10 @@ docs/emu-*.log
 docs/emu-*.log.err
 
 docs/emulator-*.log
+
+# Large binaries
+server/cloudflared.exe
+server/tunnel_url.txt
+dist/*.apk
+docs/device-evidence/*.xml
+docs/device-evidence/*.png
