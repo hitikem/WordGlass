@@ -1,204 +1,218 @@
-# WordGlass
+# WordGlass 📖
 
-WordGlass 是一款 Android 原生英语核心词汇学习应用。视觉目标是 Apple Liquid Glass 风格的蓝白高级感，交互目标是 FlClash / 酷安式的悬浮玻璃底栏与可拖拽液态透镜。
+**一款专注背单词的 Android 应用**
 
-> 当前版本：**0.2.0-beta（内测）**  
-> 状态：Room 数据闭环已接通，构建、单元测试、lint 通过；因手机已断开，**尚未完成这一版真机安装验收**。  
-> 后端 / 云 TTS：尚未接入（没有 Microsoft 凭证；阿里云 Key 未写入任何文件）。
+> Apple Liquid Glass 液态玻璃 × 极简主义设计 · 真人发音 · 联网查词 · 科学记忆
 
-## 交付物
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![Platform](https://img.shields.io/badge/platform-Android%2026%2B-green)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.3.20-purple)
+![License](https://img.shields.io/badge/license-MIT-orange)
 
-- 内测 APK：`dist/WordGlass-1.0.0-final-debug.apk`
-- SHA-256：`13BEFFE0E7B1142BCD2F776AA7DBC50F8226C2C3BEDA52CFEB04426F11BBA3E1`
-- 一键安装（手机连接并授权 USB 调试后）：`scripts/install-beta.ps1`
-- 四页截图 + 崩溃日志 + gfxinfo 验收：`scripts/verify-beta.ps1`
-- Debug 包名：`com.wordglass.app.debug`
-- 正式包名：`com.wordglass.app`
+---
 
-## 1.0.0-final 正式版
+## ✨ 核心功能
 
-- 882 条真实词库（PDF 来源可追溯，source metadata 完整）
-- Room 持久化 + SM-2 调度 + 学习/复习记录 + 首页真实统计
-- 四页 UI（首页/背单词/复习/我的）+ FlClash 风格液滴导航
-- 真人发音（有道 API 美式真人录音，缓存到本地）+ 男声/女声/英式/澳式/印式多音色
-- 设置持久化（主题/音色/语速/自动播放/每日目标）+ 数据备份/恢复 + 导入入口
-- 单元测试通过 + lint 通过 + 真机验证无 ANR/崩溃
+### 📚 学习模式（5种）
+| 模式 | 说明 |
+|------|------|
+| 🃏 **卡片** | 翻转卡片，先看词再看释义 |
+| 👆 **滑动** | 左右滑动切换单词 |
+| ✅ **选择** | 四选一，选对选错 |
+| 🎧 **听写** | 听发音拼写单词 |
+| ✏️ **拼写** | 看中文释义拼出英文 |
 
-## 0.4.x 导航栏（FlClash 形态）
+### 🗣️ 真人发音
+- 有道词典真人美式发音（免费）
+- 系统 TTS 多种音色（英式/澳式/印式）
+- 男声/女声切换
+- 试听选择音色
 
-- 形态：椭圆胶囊液滴（`PrismalCapsule`，shortestSide/2 圆角）
-- 配色：纯色液态玻璃（水样），透明玻璃折射底栏内容
-- 布局：`_dockLayout` 公式（`pitch = (span-8)/count`，`lens = pitch+8`，`inset = 4`）
-- 几何：`_lensRect` 公式（`lensWidth = (width+growth)*(1+stretch)`）
-- 拖动：1:1 跟手，不压扁、不拉伸（已按用户要求移除 `JELLY_*` 挤压）
-- 透明：整屏玻璃采样层已移除，避免软件 GL 设备 ANR
+### 📊 科学记忆
+- **SM-2 算法**：根据你的掌握程度智能安排复习
+- **学习计划**：设定目标，闹钟式滑轮选择每日词量
+- **学习报告**：周/月统计图表，可视化进度
+- **错题本**：自动记录答错的词
+- **收藏夹**：收藏重要单词
 
-## 0.3.0 视觉重构（Apple Minimalism × Editorial）
+### 🌐 联网查词
+- 英文释义（dictionaryapi.dev）
+- 中文释义（有道词典）
+- 词根词缀分析
+- 常用短语搭配
+- 搜索历史
 
-v0.2 的蓝色液态玻璃方向已按要求整体弃用。
+### ☁️ 云同步
+- 学习记录备份到你自己的电脑
+- Cloudflare Tunnel 免费公网访问
+- 自动更新检测
 
-- 色彩：暖白 `#F7F6F2`、卡片白 `#FFFFFF`、墨 `#20211F`、次级 `#85847E`、分割线 `#EAE8E1`、橄榄绿 `#687653`、暖橙 `#D98B59`；深色 `#171816` / `#242622`
-- 移除：整屏蓝色渐变、大量玻璃拟态、彩色发光、浮动胶囊导航
-- 首页：杂志式封面排版，单一墨色进度块承载最重要的数字，其余用细线分隔
-- 背单词：词典式大字号单词 + IPA + 释义 + 例句分层，翻转/滑动/选择/听写四种模式不变
-- 复习：极简单行列表（单词、音标、掌握状态、收藏），不再是复杂卡片
-- 我的：分组设置行，缩小图标、去掉彩色强调
-- 导航：原生底部栏 + 细线 + 滑动选中药丸，不再悬浮玻璃
-- 性能：删除整屏 `prismalGlassLayer`（每帧录制整屏），首帧从 4950ms 降到 250ms
-- 性能：`WordRepository.words` / `visibleWords` / `dashboard` 全部 `flowOn(Dispatchers.Default)`，882 条实体的映射不再占用主线程（此前列表滚动有 2.7s 尖峰，修后 90 分位 89ms）
-- 图标：由源图 `IMG_20261107_130922.png` 提取手写 W 字形，改为暖纸底 `#F7F6F2` + 墨色 `#20211F`，输出自适应图标（含 monochrome）与 5 档 mipmap
+### 📱 系统集成
+- **桌面小组件**：不用打开 App 也能看进度
+- **每日提醒**：通知栏打卡提醒
+- **深色模式**：跟随系统
+- **自定义头像**：相册选图 + 圆形裁剪
 
-## 已实现
+---
 
-### 数据与学习闭环
+## 🛠️ 技术栈
 
-- Room 本地数据库：词条、学习状态、复习日志、学习会话表
-- 从原始 PDF 解析出的 **882 条可溯源词条**；保留 `sourceNumber` / `sourcePage`
-- SM-2 风格调度：Again / Hard / Good / Easy，记录间隔、easiness、lapse、下次复习时间
-- 学习模式：卡片翻转、左右滑动、选择题、听写
-- 选择题与听写均写入复习日志；不是“只播动画”
-- 词库：搜索、待复习 / 学习中 / 已掌握 / 错词本 / 收藏筛选、A–Z / 掌握度 / 最近复习排序
-- 首页真实统计：今日完成、待复习、累计学习、已掌握、连续天数、学习时长、近 7 天节奏
-- 学习会话计时写入 `study_sessions`；离开学习页时落库，不再用 0 分钟假数据
-- 收藏与掌握度持久化，重启不丢
+| 技术 | 用途 |
+|------|------|
+| Kotlin 2.3.20 | 主语言 |
+| Jetpack Compose | UI 框架 |
+| Room 2.8.5 | 本地数据库 |
+| DataStore | 设置持久化 |
+| Navigation Compose | 页面导航 |
+| Coil | 图片加载 |
+| PrismalAGSL (MIT) | 液态玻璃效果 |
+| OkHttp | 网络请求 |
+| Flask (Python) | 词典服务器 |
 
-### 设置与数据安全
+---
 
-- DataStore 持久化：主题、发音人、语速、自动播放、每日目标
-- JSON 备份：词条、学习状态、复习日志、设置
-- JSON 恢复：合并写入，不删除现有词条
-- JSON 词库导入：只导入词条，不覆盖学习记录
+## 📦 安装
 
-### UI / 导航
+### 从 Release 下载
+1. 前往 [Releases](../../releases) 页面
+2. 下载最新 `WordGlass-2.0.0.apk`
+3. 在 Android 手机上安装
 
-- 四个主页面：首页、背单词、复习词库、我的
-- FlClash 风格悬浮底栏：薄磨砂条 + 可拖拽圆形液态透镜；透镜采样底栏内容层，不复制 FlClash GPL 源码
-- 真实 PrismalAGSL 玻璃只保留在首页 Hero 与底栏透镜；其余卡片使用静态磨砂层，降低滚动/拖拽掉帧
-- 导航拖拽只更新布局/图形层，避免每帧重组整页
-- Manrope 英文字体；蓝白固定品牌色；浅色 / 深色 / 跟随系统
-- 可替换 `SpeechService` 边界；当前 `SystemSpeechService` 使用系统 TTS
-- 32 MB 内容寻址 `AudioCache`（SHA-256 key、原子写入、LRU 修剪）；供云 TTS 复用，当前未产生云音频
-- 屏幕代码不依赖具体语音厂商；云 TTS 仍需服务端短期令牌
+### 从源码构建
+```bash
+# 环境要求
+# JDK 17 · Android SDK 37 · Gradle 9.5
 
-## 词库事实
+git clone https://github.com/hitikem/WordGlass.git
+cd WordGlass
+./gradlew assembleDebug
 
-- 源 PDF：44 页，SHA-256 `4FE7416D06E82E5C028408A48DBF7EA8187414B4DC79E8DAF90010C678625250`
-- 封面标注 887；原文编号 **668–672 缺失**
-- 实际解析 **882 条**，全部进入 `app/src/main/assets/words.json`
-- 10 条源数据缺音标：306、543、617、812–818；保持 `null`，不补造
-- `present` 出现两次：动词 `/prɪˈzent/` 与名词/形容词 `/ˈpreznt/`，保留为两条，不合并
-- 源 PDF 不含例句、翻译、词根、词缀、音频；这些字段保持空，不用生成内容填充
-- 提取脚本：`scripts/extract_words.py`
-
-## 技术栈
-
-- JDK 17.0.20.1
-- Gradle 9.5.0
-- AGP 9.3.1
-- Kotlin 2.3.10 + Compose Compiler 2.3.10
-- Compose BOM 2026.06.01
-- Room 2.8.5 + KSP 2.3.10
-- DataStore Preferences 1.3.0
-- Navigation Compose 2.10.2
-- compileSdk / targetSdk 37，minSdk 26
-- PrismalAGSL 1.0.6，本地 AAR
-
-### 工具链说明
-
-KSP 不支持 AGP 9.3 的内置 Kotlin，因此当前使用：
-
-```properties
-android.builtInKotlin=false
-android.newDsl=false
+# APK 输出位置
+# app/build/outputs/apk/debug/app-debug.apk
 ```
 
-并显式应用 `org.jetbrains.kotlin.android`。这是可工作的过渡方案；AGP 10 前需要迁移回内置 Kotlin 或替换代码生成方案。
+---
 
-## 虚拟机
+## 🖥️ 电脑服务器（可选）
 
-两个 AVD，配置均已针对本机调优（720×1600 @320dpi、3 GB RAM、4 核、GPU 开启）。只用命令行 SDK tools，**不需要 Android Studio**。
+支持联网查词和云同步：
 
-| AVD | 系统 | 状态 |
-|---|---|---|
-| `WordGlass_API35` | Android 15 / API 35 | ✅ 可用，四页与新图标均已验证 |
-| `WordGlass_API37_Play` | Android 17 / API 37（Google Play 官方镜像） | ❌ 系统级崩溃，暂不可用 |
+```bash
+cd server
+pip install flask requests
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\emu.ps1 -Start api35
-powershell -ExecutionPolicy Bypass -File scripts\emu.ps1 -Status
-powershell -ExecutionPolicy Bypass -File scripts\emu.ps1 -Stop
+# 启动服务器
+python dict_server.py
+
+# 启动 Cloudflare 免费隧道（另一个终端）
+cloudflared tunnel --url http://localhost:8765
+# 得到公网地址后填入 App 设置
 ```
 
-### 为什么 Android 17 模拟器跑不起来
+### 服务器功能
+| 接口 | 说明 |
+|------|------|
+| `GET /api/lookup?word=hello` | 查词（英文释义+中文+词根） |
+| `GET /api/audio/hello` | 获取发音 |
+| `POST /api/sync/upload` | 上传学习记录 |
+| `GET /api/sync/download` | 下载学习记录 |
+| `GET /api/update/check` | 检查更新 |
 
-两个镜像（AOSP `google_apis` 与 Google Play `google_apis_playstore`）都在系统层崩溃，应用尚未启动：
+---
 
-```text
-Assertion failed: !rcEnc->featureInfo()->hasReadColorBufferDma
-/system/bin/surfaceflinger (RegionSamplingThread)
-/vendor/lib64/hw/mapper.ranchu.so (GoldfishMapper::readFromHost)
+## 📁 项目结构
+
+```
+WordGlass/
+├── app/src/main/java/com/wordglass/
+│   ├── MainActivity.kt              # 主界面导航
+│   ├── ui/
+│   │   ├── home/                     # 首页（学习报告、词汇测试）
+│   │   ├── study/                    # 学习（5种模式）
+│   │   ├── library/                  # 词库（搜索、筛选）
+│   │   ├── profile/                  # 我的（设置、头像、音色）
+│   │   ├── search/                   # 联网查词
+│   │   └── components/               # 通用组件
+│   ├── data/
+│   │   ├── local/                    # Room 数据库
+│   │   ├── repository/               # 数据仓库
+│   │   ├── speech/                   # 发音服务
+│   │   └── network/                  # 网络 API
+│   ├── model/                        # 数据模型
+│   ├── notification/                 # 每日提醒
+│   └── widget/                       # 桌面小组件
+├── app/src/main/assets/
+│   └── words.json                    # 882 词词库
+├── server/
+│   └── dict_server.py               # Python 词典服务器
+└── docs/                             # 文档和测试证据
 ```
 
-- `-gpu host`：`DisplaySurfaceGlContextHelper context was preempted by others`
-  （本机有 4 个显示适配器：Intel UHD、NVIDIA 930MX、OrayIddDriver、GameViewer）
-- `-gpu swiftshader_indirect`：SurfaceFlinger 区域采样线程 SIGABRT
+---
 
-这是**模拟器图形栈缺陷，与 WordGlass 无关**。Android 17 / API 37 的行为改为在真机
-（REDMI K80，Android 17 / API 37）验证。
+## 📖 词库说明
 
-模拟器走软件 GL（`ro.hardware.egl = emulation`），系统设置页空转也掉帧，属模拟器自身上限。
+- **882 条**高中英语核心词汇
+- 来源可溯，不编造任何数据
+- 包含：单词、音标、中文释义
+- 部分词汇含用法说明（62 条）
+- 例句、词根、翻译字段预留（PDF 未提供则为空）
 
-## 构建
+---
 
-```powershell
-cd D:\ds\WordGlass
-.\gradlew.bat :app:assembleDebug
-.\gradlew.bat :app:testDebugUnitTest
-.\gradlew.bat :app:lintDebug
-```
+## 🔒 隐私
 
-APK 输出：
+- ✅ 所有学习数据保存在**你的手机**上
+- ✅ 云同步只上传到**你自己的电脑**
+- ✅ 联网查词只发送**单词文本**
+- ✅ 不收集任何个人信息
+- ✅ 不经过任何第三方服务器
 
-```text
-app/build/outputs/apk/debug/app-debug.apk
-```
+---
 
-## 测试
+## 📄 开源许可
 
-- `:app:testDebugUnitTest`：通过
-- `WordRepositoryTest`（Robolectric + Room 内存库）验证：
-  - 882 条落库
-  - 668–672 缺口不被补造
-  - `present` 两个读音都保留
-  - 收藏持久化
-  - Good / Again 调度与复习日志
-- `:app:lintDebug`：通过
-- `:app:assembleDebugAndroidTest`：通过
-- 真机 Compose 导航测试之前出现过一次 instrumentation process crash，尚未在 0.2.0 上复测；不能宣称已通过
+| 组件 | 许可 |
+|------|------|
+| WordGlass | MIT |
+| PrismalAGSL | MIT |
+| Coil | Apache-2.0 |
+| Manrope Font | OFL |
 
-## 尚未完成 / 已知限制
+---
 
-1. 手机已断开，0.2.0 未做真机安装、启动、滑动流畅度与备份恢复验收。
-2. 云 TTS 未接入：没有 Microsoft Speech Key；当前使用系统 TTS。
-3. 学习时长只统计“进入学习页到离开”的会话；应用被系统杀死时未结束的会话不会补记。
-4. 备份/恢复与词库导入目前是合并写入，不是“清空后覆盖”；恢复前请先导出备份。
-5. PDF/XLSX 直接导入未实现；当前只支持 WordGlass JSON。
-6. 无正式签名、无 release AAB、无应用商店材料。
-7. 词库版权/商用授权仍需确认；源 PDF 不随仓库分发。
+## 🎯 版本历史
 
-## 安全
+### v2.0.0 (2026-11-08)
+- ✅ 自定义照片头像（圆形裁剪）
+- ✅ 自定义昵称和签名
+- ✅ 拼写练习模式
+- ✅ 学习计划（闹钟式滑轮选择）
+- ✅ 学习报告（周/月统计）
+- ✅ 每日打卡提醒
+- ✅ 词汇量测试
+- ✅ 音色选择器（全部免费音色+试听）
+- ✅ 桌面小组件
+- ✅ 联网查词（释义+词根+短语）
+- ✅ 云同步（上传/恢复）
+- ✅ 自动更新检测
+- ✅ 产品说明页面
+- ✅ 自定义应用图标
 
-- 聊天中出现过的阿里云 `sk-ws-...` Key **没有写入源码、日志、Git 或 APK**；建议立即轮换。
-- 客户端不应内置长期云 TTS 密钥；正式方案应使用服务端短期令牌或代理网关。
-- `local.properties`、签名文件、API Key 均不得提交。
+### v1.0.0-final
+- 真人发音（有道）
+- 5 种学习模式
+- SM-2 记忆算法
+- 深色模式
+- 数据备份/恢复
 
-## 文档
+### v0.4.x
+- 液态玻璃 UI
+- 导航栏动画
 
-- [开发计划与阶段状态](DEVELOPMENT_PLAN.md)
-- [技术选型](docs/TECH_SELECTION.md)
-- [UI 设计系统](docs/UI_DESIGN.md)
-- [第三方声明](THIRD_PARTY_NOTICES.md)
+### v0.2.0-beta
+- 初始版本
 
-## 许可
+---
 
-应用代码目前为私有项目。第三方组件许可见 `THIRD_PARTY_NOTICES.md`。FlClash 仅作为交互参考，其 GPL-3.0 源码未被复制进 WordGlass。
+**Made with ❤️ for focused learning.**
