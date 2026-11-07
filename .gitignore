@@ -25,3 +25,5 @@ build-w-mask.png
 
 docs/emu-*.log
 docs/emu-*.log.err
+
+docs/emulator-*.log
