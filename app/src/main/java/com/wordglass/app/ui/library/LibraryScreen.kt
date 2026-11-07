@@ -30,6 +30,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material.icons.rounded.VolumeUp
@@ -85,6 +86,7 @@ fun LibraryScreen(
     vm: WordGlassViewModel,
     onSpeak: (String) -> Unit,
     onStartStudy: () -> Unit,
+    onOnlineSearch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = WgTheme.colors
@@ -153,6 +155,7 @@ fun LibraryScreen(
                 onValueChange = vm::setQuery,
                 onClear = { vm.setQuery("") },
                 focusManager = focusManager,
+                onOnlineSearch = onOnlineSearch,
             )
         }
 
@@ -296,6 +299,7 @@ private fun SearchField(
     onValueChange: (String) -> Unit,
     onClear: () -> Unit,
     focusManager: androidx.compose.ui.focus.FocusManager,
+    onOnlineSearch: () -> Unit = {},
 ) {
     val colors = WgTheme.colors
     Row(
@@ -355,6 +359,22 @@ private fun SearchField(
                     modifier = Modifier.size(16.dp),
                 )
             }
+        }
+        // Online search button
+        Box(
+            Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(colors.blue.copy(alpha = 0.12f))
+                .clickable(onClick = onOnlineSearch),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Rounded.Public,
+                contentDescription = "联网查词",
+                tint = colors.blue,
+                modifier = Modifier.size(18.dp),
+            )
         }
     }
 }

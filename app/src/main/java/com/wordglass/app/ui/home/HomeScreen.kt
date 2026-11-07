@@ -73,6 +73,7 @@ fun HomeScreen(
     stats: DashboardStats,
     words: List<Word>,
     dark: Boolean,
+    userName: String,
     onToggleTheme: () -> Unit,
     onStartStudy: () -> Unit,
     onOpenLibrary: () -> Unit,
@@ -109,6 +110,7 @@ fun HomeScreen(
             HomeHeader(
                 dateLine = dateLine,
                 greeting = greeting,
+                userName = userName,
                 dark = dark,
                 backdrop = backdrop,
                 onToggleTheme = onToggleTheme,
@@ -185,7 +187,7 @@ fun HomeScreen(
                                     )
                                 }
                                 Text(
-                                    text = if (remaining > 0) "还差 $remaining 个词完成今日目标" else "今日目标已完成",
+                                    text = if (stats.estimatedDaysToFinish > 0) "预计还需 ${stats.estimatedDaysToFinish} 天学完" else "已学完全部单词",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color.White.copy(alpha = 0.78f),
                                 )
@@ -332,7 +334,12 @@ fun HomeScreen(
                     Spacer(Modifier.height(17.dp))
                     WeeklyBars(
                         values = stats.weeklyMinutes,
-                        labels = listOf("一", "二", "三", "四", "五", "六", "日"),
+                        labels = (6 downTo 0).map { offset ->
+                            when (java.time.LocalDate.now().minusDays(offset.toLong()).dayOfWeek.value) {
+                                1 -> "一"; 2 -> "二"; 3 -> "三"; 4 -> "四"
+                                5 -> "五"; 6 -> "六"; 7 -> "日"; else -> "?"
+                            }
+                        },
                         highlightIndex = 6,
                     )
                 }
@@ -348,7 +355,7 @@ fun HomeScreen(
                     backdrop = backdrop,
                     icon = Icons.Rounded.School,
                     title = "错词本",
-                    detail = "12 个待巩固",
+                    detail = "${stats.wrongCount} 个待巩固",
                     onClick = onOpenLibrary,
                     modifier = Modifier.weight(1f),
                 )
@@ -356,7 +363,7 @@ fun HomeScreen(
                     backdrop = backdrop,
                     icon = Icons.Rounded.Bookmark,
                     title = "收藏夹",
-                    detail = "8 个收藏词",
+                    detail = "${stats.favoriteCount} 个收藏词",
                     onClick = onOpenLibrary,
                     modifier = Modifier.weight(1f),
                 )
@@ -378,6 +385,7 @@ fun HomeScreen(
 private fun HomeHeader(
     dateLine: String,
     greeting: String,
+    userName: String,
     dark: Boolean,
     backdrop: PrismalBackdrop,
     onToggleTheme: () -> Unit,
@@ -421,12 +429,12 @@ private fun HomeHeader(
             }
             Spacer(Modifier.height(15.dp))
             Text(
-                text = "$greeting，Alex",
+                text = "$greeting，$userName",
                 style = MaterialTheme.typography.headlineMedium,
                 color = colors.ink,
             )
             Text(
-                text = "把今天的 8 个词，变成明天的底气。",
+                text = "坚持每天学习，积少成多。",
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.inkSecondary,
                 modifier = Modifier.padding(top = 3.dp),
@@ -686,3 +694,5 @@ private fun MiniActionCard(
         }
     }
 }
+
+

@@ -24,11 +24,19 @@ abstract class WordDatabase : RoomDatabase() {
     abstract fun wordDao(): WordDao
 
     companion object {
+        @Volatile
+        private var INSTANCE: WordDatabase? = null
+
         fun create(context: Context): WordDatabase =
-            Room.databaseBuilder(
-                context.applicationContext,
-                WordDatabase::class.java,
-                "wordglass.db",
-            ).build()
+            INSTANCE ?: synchronized(this) {
+                INSTANCE ?: Room.databaseBuilder(
+                    context.applicationContext,
+                    WordDatabase::class.java,
+                    "wordglass.db",
+                ).build().also { INSTANCE = it }
+            }
+
+        /** Get existing instance without creating a new one (for widget). */
+        fun getInstance(): WordDatabase? = INSTANCE
     }
 }

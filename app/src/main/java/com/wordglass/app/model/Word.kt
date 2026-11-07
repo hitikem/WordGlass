@@ -48,6 +48,7 @@ enum class StudyMode(val label: String, val eyebrow: String) {
     SWIPE("滑动", "SWIPE"),
     CHOICE("选择", "CHOICE"),
     DICTATION("听写", "TYPE"),
+    SPELLING("拼写", "SPELL"),
 }
 
 enum class StudyRating(val label: String, val shortLabel: String) {
@@ -82,7 +83,24 @@ data class DashboardStats(
     val streakDays: Int = 12,
     val minutesToday: Int = 38,
     val weeklyMinutes: List<Int> = listOf(18, 26, 14, 34, 28, 9, 17),
-)
+    val totalWords: Int = 882,
+    val planDays: Int = 0,
+    val planDailyWords: Int = 0,
+    val wrongCount: Int = 0,
+    val favoriteCount: Int = 0,
+) {
+    /** How many words remain to reach the goal. */
+    val remainingToday: Int get() = (dailyGoal - completedToday).coerceAtLeast(0)
+
+    /** Estimated days to finish all words at current daily goal. */
+    val estimatedDaysToFinish: Int
+        get() = if (dailyGoal <= 0) 0 else (totalWords - totalLearned).coerceAtLeast(0) / dailyGoal
+
+    /** Plan progress percentage. */
+    val planProgress: Float
+        get() = if (totalWords <= 0) 0f
+        else (totalLearned.toFloat() / totalWords).coerceIn(0f, 1f)
+}
 
 enum class ThemeMode(val label: String) {
     SYSTEM("跟随系统"),

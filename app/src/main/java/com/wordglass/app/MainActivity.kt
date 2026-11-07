@@ -50,6 +50,8 @@ import com.wordglass.app.ui.WordGlassViewModel
 import com.wordglass.app.ui.home.HomeScreen
 import com.wordglass.app.ui.library.LibraryScreen
 import com.wordglass.app.ui.profile.ProfileScreen
+import com.wordglass.app.ui.search.SearchScreen
+import com.wordglass.app.ui.SyncStatus
 import com.wordglass.app.ui.study.StudyScreen
 import java.time.LocalDate
 
@@ -76,6 +78,7 @@ private object Routes {
     const val STUDY = "study"
     const val LIBRARY = "library"
     const val PROFILE = "profile"
+    const val SEARCH = "search"
 }
 
 @Composable
@@ -149,6 +152,7 @@ fun WordGlassApp(
                             onOpenLibrary = {
                                 navController.navigateTab(Routes.LIBRARY)
                             },
+                            userName = settings.profileName,
                         )
                     }
                     composable(Routes.STUDY) {
@@ -168,6 +172,15 @@ fun WordGlassApp(
                             onStartStudy = {
                                 navController.navigateTab(Routes.STUDY)
                             },
+                            onOnlineSearch = {
+                                navController.navigate(Routes.SEARCH)
+                            },
+                        )
+                    }
+                    composable(Routes.SEARCH) {
+                        SearchScreen(
+                            onBack = { navController.popBackStack() },
+                            onSpeak = { speaker.speak(it) },
                         )
                     }
                     composable(Routes.PROFILE) {
@@ -181,7 +194,9 @@ fun WordGlassApp(
                             onAutoPlayChange = vm::setAutoPlay,
                             onDailyGoalChange = vm::setDailyGoal,
                             onSpeakSample = {
-                                speaker.speak("Small steps, every day. Welcome to WordGlass.")
+                                // Speak a real word so the sample uses the selected voice
+                                // (real-human pronunciation first, TTS fallback).
+                                speaker.speak("change")
                             },
                             onImport = {
                                 importLauncher.launch(arrayOf("application/json", "text/plain"))
@@ -191,6 +206,31 @@ fun WordGlassApp(
                             },
                             onRestore = {
                                 restoreLauncher.launch(arrayOf("application/json", "text/plain"))
+                            },
+                            onNameChange = { vm.setProfileName(it) },
+                            onBioChange = { vm.setProfileBio(it) },
+                            onAvatarSeedChange = { vm.setProfileAvatarSeed(it) },
+                            onAvatarUriChange = { vm.setProfileAvatarUri(it) },
+                            onVoiceProfileChange = { vm.setVoiceProfile(it.id) },
+                            availableVoices = systemSpeaker.enumerateFreeVoices(),
+                            isLoadingVoices = !systemSpeaker.engineReady,
+                            onPreviewVoice = { voice ->
+                                if (voice.isRealHuman) {
+                                    speaker.speak("change")
+                                } else {
+                                    systemSpeaker.speakWithVoice("change", voice.id.removePrefix("sys_"))
+                                }
+                            },
+                            onSyncUpload = { vm.syncUpload() },
+                            onSyncDownload = { vm.syncDownload() },
+                            onCheckUpdate = { vm.checkUpdate() },
+                            syncStatus = when (val s = vm.syncStatus.value) {
+                                is SyncStatus.Idle -> "就绪"
+                                is SyncStatus.Syncing -> "同步中…"
+                                is SyncStatus.UploadSuccess -> "上传成功"
+                                is SyncStatus.DownloadSuccess -> "恢复成功"
+                                is SyncStatus.Error -> "错误: ${s.message}"
+                                else -> "就绪"
                             },
                         )
                     }
@@ -215,6 +255,8 @@ private fun NavHostController.navigateTab(route: String) {
         restoreState = true
     }
 }
+
+
 
 
 

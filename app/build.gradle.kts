@@ -14,8 +14,8 @@ android {
         applicationId = "com.wordglass.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 5
-        versionName = "1.0.0-final"
+        versionCode = 10
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -93,6 +93,8 @@ dependencies {
     implementation("androidx.room:room-runtime:2.8.5")
     implementation("androidx.room:room-ktx:2.8.5")
     implementation("androidx.datastore:datastore-preferences:1.3.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("io.coil-kt:coil-compose:2.7.0")
     ksp("androidx.room:room-compiler:2.8.5")
 
     // MIT-licensed glass renderer, pinned as a local AAR for reproducible offline builds.
@@ -114,6 +116,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }
+
 
 
 

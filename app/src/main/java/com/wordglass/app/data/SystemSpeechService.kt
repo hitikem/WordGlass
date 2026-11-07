@@ -86,6 +86,45 @@ class SystemSpeechService(context: Context) :
         runCatching { engine.voice = preferred }
     }
 
+    /**
+     * Enumerate all installed English TTS voices as free, selectable profiles.
+     * Each voice is classified by name heuristics for gender and locale.
+     */
+    fun enumerateFreeVoices(): List<com.wordglass.app.model.VoiceProfile> {
+        val engine = tts ?: return emptyList()
+        val voices = engine.voices.orEmpty().toList()
+        return voices
+            .filter { it.locale.language == Locale.ENGLISH.language }
+            .map { v ->
+                val gender = if (v.looksFemale()) VoiceGender.FEMALE else VoiceGender.MALE
+                val isReal = false
+                com.wordglass.app.model.VoiceProfile(
+                    id = "sys_${v.name}",
+                    gender = gender,
+                    displayName = "${v.name} (${v.locale.toLanguageTag()})",
+                    locale = v.locale.toLanguageTag(),
+                    isRealHuman = isReal,
+                )
+            }
+            .sortedWith(compareBy({ it.locale }, { it.displayName }))
+    }
+
+    /**
+     * Speak text using a specific voice name (system TTS voice).
+     */
+    fun speakWithVoice(text: String, voiceName: String) {
+        val engine = tts ?: return
+        if (!isReady) return
+        val voice = engine.voices.orEmpty().firstOrNull { it.name == voiceName }
+        if (voice != null) {
+            runCatching { engine.voice = voice }
+        }
+        engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "wordglass-preview")
+    }
+
+    /** Whether the TTS engine is ready to enumerate and speak. */
+    val engineReady: Boolean get() = isReady
+
     private fun Voice.looksFemale(): Boolean {
         val n = name.lowercase(Locale.US)
         return n.contains("female") || n.contains("aria") || n.contains("jenny") ||
@@ -100,7 +139,7 @@ class SystemSpeechService(context: Context) :
 }
 
 @Composable
-fun rememberSystemSpeechService(gender: VoiceGender, rate: Float): SpeechService {
+fun rememberSystemSpeechService(gender: VoiceGender, rate: Float): SystemSpeechService {
     val context = LocalContext.current
     val speaker = remember { SystemSpeechService(context.applicationContext) }
     LaunchedEffect(gender) { speaker.setGender(gender) }

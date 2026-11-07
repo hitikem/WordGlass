@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material.icons.rounded.RestartAlt
@@ -164,6 +165,12 @@ fun StudyScreen(
                             state = state,
                             onChoose = { index, correct -> vm.choose(index, correct) },
                             onNext = vm::nextAfterAnswer,
+                            onSpeak = onSpeak,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        StudyMode.SPELLING -> SpellingStudyMode(
+                            word = word,
+                            onRate = vm::rate,
                             onSpeak = onSpeak,
                             modifier = Modifier.fillMaxSize(),
                         )
@@ -313,4 +320,7 @@ private fun modeIcon(mode: StudyMode): ImageVector = when (mode) {
     StudyMode.SWIPE -> Icons.Rounded.Swipe
     StudyMode.CHOICE -> Icons.Rounded.Quiz
     StudyMode.DICTATION -> Icons.Rounded.Keyboard
+    StudyMode.SPELLING -> Icons.Rounded.Edit
 }
+
+

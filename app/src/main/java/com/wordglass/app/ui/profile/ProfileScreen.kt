@@ -32,6 +32,8 @@ import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Public
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.AlertDialog
@@ -41,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,6 +53,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -69,6 +73,8 @@ import com.wordglass.app.model.AppSettings
 import com.wordglass.app.model.DashboardStats
 import com.wordglass.app.model.ThemeMode
 import com.wordglass.app.model.VoiceGender
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.Color as ComposeColor
 
 @Composable
 fun ProfileScreen(
@@ -84,12 +90,26 @@ fun ProfileScreen(
     onImport: () -> Unit,
     onBackup: () -> Unit,
     onRestore: () -> Unit,
+    onNameChange: (String) -> Unit,
+    onBioChange: (String) -> Unit,
+    onAvatarSeedChange: (String) -> Unit,
+    onAvatarUriChange: (String?) -> Unit,
+    onVoiceProfileChange: (com.wordglass.app.model.VoiceProfile) -> Unit,
+    availableVoices: List<com.wordglass.app.model.VoiceProfile>,
+    isLoadingVoices: Boolean,
+    onPreviewVoice: (com.wordglass.app.model.VoiceProfile) -> Unit,
+    onSyncUpload: () -> Unit,
+    onSyncDownload: () -> Unit,
+    onCheckUpdate: () -> Unit,
+    syncStatus: String,
     modifier: Modifier = Modifier,
 ) {
     val colors = WgTheme.colors
     var goalDialog by remember { mutableStateOf(false) }
     var infoDialog by remember { mutableStateOf<String?>(null) }
-
+    var editProfile by remember { mutableStateOf(false) }
+    var voicePickerDialog by remember { mutableStateOf(false) }
+    var avatarPickerDialog by remember { mutableStateOf(false) }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -122,6 +142,9 @@ fun ProfileScreen(
             ProfileHero(
                 backdrop = backdrop,
                 streakDays = stats.streakDays,
+                settings = settings,
+                onEditClick = { editProfile = true },
+                onAvatarClick = { avatarPickerDialog = true },
             )
         }
 
@@ -193,13 +216,11 @@ fun ProfileScreen(
                 SettingBlock(
                     icon = Icons.Rounded.Language,
                     title = "发音人",
-                    subtitle = "美式英语 · 原型使用系统 TTS",
+                    subtitle = "点击选择音色，可试听",
                 ) {
-                    SegmentedGlass(
-                        options = VoiceGender.entries.map { it.label },
-                        selectedIndex = VoiceGender.entries.indexOf(settings.voice),
-                        onSelect = { onVoiceChange(VoiceGender.entries[it]) },
-                        modifier = Modifier.fillMaxWidth(),
+                    GlassChip(
+                        text = "选择音色",
+                        onClick = { voicePickerDialog = true },
                     )
                 }
                 SettingsDivider()
@@ -294,6 +315,39 @@ fun ProfileScreen(
 
         item {
             SectionHeader(
+                title = "云同步",
+                eyebrow = "CLOUD SYNC",
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+
+        item {
+            SettingsGroup(backdrop = backdrop) {
+                SettingsRow(
+                    icon = Icons.Rounded.CloudUpload,
+                    title = "上传学习记录",
+                    subtitle = "备份到你的电脑服务器 · $syncStatus",
+                    onClick = onSyncUpload,
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Rounded.CloudDownload,
+                    title = "从云端恢复",
+                    subtitle = "从电脑服务器下载学习记录",
+                    onClick = onSyncDownload,
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Rounded.Refresh,
+                    title = "检查更新",
+                    subtitle = "检查是否有新版本",
+                    onClick = onCheckUpdate,
+                )
+            }
+        }
+
+        item {
+            SectionHeader(
                 title = "关于",
                 eyebrow = "ABOUT",
                 modifier = Modifier.padding(top = 2.dp),
@@ -304,16 +358,23 @@ fun ProfileScreen(
             SettingsGroup(backdrop = backdrop) {
                 SettingsRow(
                     icon = Icons.Rounded.Info,
-                    title = "WordGlass",
-                    subtitle = "0.2.0-beta · 内测",
-                    onClick = { infoDialog = "WordGlass 0.2.0-beta\n\nJetpack Compose · Room · DataStore · PrismalAGSL (MIT) · Manrope (OFL)\n\n已接入 882 条可溯源词库、学习状态、SM-2 调度、设置持久化与 JSON 备份。云 TTS 仍需配置密钥。" },
+                    title = "WordGlass 2.0",
+                    subtitle = "专注背单词 · 真人发音 · 联网查词",
+                    onClick = { infoDialog = "WordGlass 2.0.0\n\n一款专注背单词的 Android 应用。\n\n【核心功能】\n· 真人发音（有道免费词典语音）\n· 五种学习模式：卡片 / 滑动 / 选择 / 听写 / 拼写\n· SM-2 记忆算法，科学安排复习\n· 联网查词：英文释义 + 中文释义 + 词根词缀 + 短语\n· 学习计划：设定目标，每天学一点\n· 学习报告：周/月统计，可视化进度\n· 桌面小组件：不用打开 App 也能看进度\n· 每日提醒：坚持打卡不忘记\n· 云同步：学习记录备份到你的电脑\n· 自定义头像、昵称\n\n【词库】\n882 条高中英语核心词汇，来源可溯，不编造数据。\n\n【技术】\nKotlin · Jetpack Compose · Room · DataStore\nPrismalAGSL (MIT) · Coil (Apache-2.0) · Manrope (OFL)\n\n【隐私】\n所有数据保存在你的手机和你的电脑上，不经过任何第三方服务器。" },
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Palette,
                     title = "设计语言",
-                    subtitle = "Liquid Glass · Premium Minimalism",
-                    onClick = { infoDialog = "蓝白液态玻璃设计系统：固定品牌色、连续圆角、克制模糊、清晰文字层级，以及支持降级的玻璃渲染。" },
+                    subtitle = "Liquid Glass × Premium Minimalism",
+                    onClick = { infoDialog = "设计语言\n\n· Apple Liquid Glass 液态玻璃视觉\n· 极简主义：少即是多\n· 蓝白配色：清爽、专注\n· 连续圆角：统一视觉节奏\n· 克制动效：不抢注意力\n· 真实数据：不编造任何内容\n\n开源组件：\nPrismalAGSL 1.0.6 (MIT)\nCoil 2.7.0 (Apache-2.0)\nManrope Font (OFL)" },
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = Icons.Rounded.Public,
+                    title = "联网服务",
+                    subtitle = "词典 API · 云同步 · 自动更新",
+                    onClick = { infoDialog = "联网服务\n\n【联网查词】\n使用免费词典 API（dictionaryapi.dev + 有道词典），查询英文释义、中文翻译、词根词缀、常用短语。\n\n【云同步】\n学习记录备份到你自己的电脑服务器（Cloudflare Tunnel 免费公网访问），不经过任何第三方。\n\n【自动更新】\n检测新版本并提示更新。\n\n【隐私】\n联网查词只发送单词文本，不发送你的学习数据。" },
                 )
             }
         }
@@ -340,6 +401,39 @@ fun ProfileScreen(
         )
     }
 
+    if (editProfile) {
+        EditProfileDialog(
+            name = settings.profileName,
+            bio = settings.profileBio,
+            onDismiss = { editProfile = false },
+            onSave = { name, bio, seed ->
+                onNameChange(name)
+                onBioChange(bio)
+                onAvatarSeedChange(seed)
+                editProfile = false
+            },
+        )
+    }
+
+    if (voicePickerDialog) {
+        VoicePickerDialog(
+            currentVoiceId = settings.voiceProfileId,
+            availableVoices = availableVoices,
+            isLoadingVoices = isLoadingVoices,
+            onPreview = { onPreviewVoice(it) },
+            onSelect = { onVoiceProfileChange(it) },
+            onDismiss = { voicePickerDialog = false },
+        )
+    }
+
+    if (avatarPickerDialog) {
+        AvatarPickerDialog(
+            currentAvatarUri = settings.profileAvatarUri,
+            onAvatarSelected = { uri -> onAvatarUriChange(uri) },
+            onDismiss = { avatarPickerDialog = false },
+        )
+    }
+
     infoDialog?.let { message ->
         AlertDialog(
             onDismissRequest = { infoDialog = null },
@@ -348,7 +442,7 @@ fun ProfileScreen(
             textContentColor = colors.inkSecondary,
             title = {
                 Text(
-                    text = "UI 原型说明",
+                    text = "WordGlass",
                     style = MaterialTheme.typography.titleLarge,
                 )
             },
@@ -371,9 +465,101 @@ private fun formatStudyMinutes(minutes: Int): String =
     if (minutes >= 60) "${minutes / 60}h" else "${minutes}m"
 
 @Composable
+private fun EditProfileDialog(
+    name: String,
+    bio: String,
+    onDismiss: () -> Unit,
+    onSave: (String, String, String) -> Unit,
+) {
+    val colors = WgTheme.colors
+    var nameInput by remember { mutableStateOf(name) }
+    var bioInput by remember { mutableStateOf(bio) }
+    var avatarSeed by remember { mutableStateOf("0") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surfaceElevated,
+        titleContentColor = colors.ink,
+        textContentColor = colors.inkSecondary,
+        title = {
+            Text(text = "编辑个人资料", style = MaterialTheme.typography.titleLarge)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text = "昵称", style = MaterialTheme.typography.labelMedium, color = colors.inkSecondary)
+                BasicTextField(
+                    value = nameInput,
+                    onValueChange = { nameInput = it.take(32) },
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.ink),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(colors.background, RoundedCornerShape(10.dp))
+                        .border(1.dp, colors.divider, RoundedCornerShape(10.dp))
+                        .padding(12.dp),
+                )
+                Text(text = "个性签名", style = MaterialTheme.typography.labelMedium, color = colors.inkSecondary)
+                BasicTextField(
+                    value = bioInput,
+                    onValueChange = { bioInput = it.take(60) },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.ink),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(colors.background, RoundedCornerShape(10.dp))
+                        .border(1.dp, colors.divider, RoundedCornerShape(10.dp))
+                        .padding(12.dp),
+                )
+                Text(text = "头像颜色", style = MaterialTheme.typography.labelMedium, color = colors.inkSecondary)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("0", "1", "2", "3", "4", "5").forEach { seed ->
+                        Box(
+                            Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(avatarColorForSeed(seed))
+                                .border(
+                                    if (avatarSeed == seed) 2.dp else 0.dp,
+                                    if (avatarSeed == seed) colors.ink else Color.Transparent,
+                                    CircleShape,
+                                )
+                                .clickable { avatarSeed = seed },
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(nameInput, bioInput, avatarSeed) }) {
+                Text("保存", color = colors.blue)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消", color = colors.inkSecondary)
+            }
+        },
+    )
+}
+
+@Composable
+private fun avatarColorForSeed(seed: String): Color {
+    val colors = WgTheme.colors
+    return when (seed) {
+        "1" -> colors.blueDeep
+        "2" -> colors.mint
+        "3" -> colors.warning
+        "4" -> colors.cyan
+        "5" -> colors.danger
+        else -> colors.blue
+    }
+}
+
+@Composable
 private fun ProfileHero(
     backdrop: PrismalBackdrop,
     streakDays: Int,
+    settings: AppSettings,
+    onEditClick: () -> Unit,
+    onAvatarClick: () -> Unit,
 ) {
     val colors = WgTheme.colors
     GlassCard(
@@ -393,25 +579,59 @@ private fun ProfileHero(
                             listOf(colors.blue, colors.blueDeep),
                         ),
                     )
-                    .border(2.dp, Color.White.copy(alpha = 0.50f), CircleShape),
+                    .border(2.dp, Color.White.copy(alpha = 0.50f), CircleShape)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { onAvatarClick() },
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = "A",
-                    style = WgType.numericHero,
-                    color = Color.White,
-                    fontSize = 28.sp,
-                )
+                // Show photo avatar if set, otherwise show initial
+                val avatarFile = settings.profileAvatarUri?.let { java.io.File(it) }
+                if (avatarFile != null && avatarFile.exists()) {
+                    coil.compose.AsyncImage(
+                        model = avatarFile,
+                        contentDescription = "头像",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, Color.White.copy(alpha = 0.50f), CircleShape),
+                        contentScale = ContentScale.Crop,
+                    )
+                } else {
+                    Text(
+                        text = settings.profileName.firstOrNull()?.uppercase() ?: "A",
+                        style = WgType.numericHero,
+                        color = Color.White,
+                        fontSize = 28.sp,
+                    )
+                }
             }
             Spacer(Modifier.size(14.dp))
             Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = settings.profileName,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = colors.ink,
+                    )
+                    Spacer(Modifier.size(6.dp))
+                    Box(
+                        Modifier
+                            .clip(RoundedCornerShape(50))
+                            .border(1.dp, colors.divider, RoundedCornerShape(50))
+                            .clickable { onEditClick() }
+                            .padding(horizontal = 7.dp, vertical = 3.dp),
+                    ) {
+                        Text(
+                            text = "编辑",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.inkSecondary,
+                        )
+                    }
+                }
                 Text(
-                    text = "Alex Chen",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = colors.ink,
-                )
-                Text(
-                    text = "WordGlass Learner",
+                    text = settings.profileBio,
                     style = WgType.label,
                     color = colors.inkSecondary,
                 )
@@ -587,6 +807,7 @@ private fun DailyGoalDialog(
     onSelect: (Int) -> Unit,
 ) {
     val colors = WgTheme.colors
+    var selectedValue by remember { mutableIntStateOf(current) }
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = colors.surfaceElevated,
@@ -599,46 +820,44 @@ private fun DailyGoalDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text(
-                    text = "选择一个可持续的节奏。目标会在正式版本中持久化。",
+                    text = "每天背多少个单词？",
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                Spacer(Modifier.height(3.dp))
-                listOf(15, 20, 25, 30).forEach { value ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(13.dp))
-                            .background(
-                                if (current == value) colors.blue.copy(alpha = 0.10f)
-                                else Color.Transparent,
-                            )
-                            .clickable { onSelect(value) }
-                            .padding(horizontal = 12.dp, vertical = 11.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "$value 个词 / 天",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = if (current == value) colors.blue else colors.ink,
-                            modifier = Modifier.weight(1f),
-                        )
-                        if (current == value) {
-                            Text(
-                                text = "当前",
-                                style = WgType.label,
-                                color = colors.blue,
-                            )
-                        }
-                    }
-                }
+                Spacer(Modifier.height(16.dp))
+                com.wordglass.app.ui.components.NumberPicker(
+                    value = selectedValue,
+                    onValueChange = { selectedValue = it },
+                    minValue = 5,
+                    maxValue = 100,
+                    unit = "词",
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = "约 ${(882f / selectedValue).toInt()} 天背完全部单词",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.inkTertiary,
+                )
             }
         },
         confirmButton = {
+            TextButton(
+                onClick = {
+                    onSelect(selectedValue)
+                },
+            ) {
+                Text("确定", color = colors.blue)
+            }
+        },
+        dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("取消", color = colors.inkSecondary)
             }
         },
     )
 }
+

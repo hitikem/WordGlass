@@ -119,7 +119,10 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
         initialValue = emptyList(),
     )
 
-    val dashboard: StateFlow<DashboardStats> = combine(_words, repository.sessions) { words, sessions ->
+    val dashboard: StateFlow<DashboardStats> = combine(
+        combine(_words, repository.sessions) { words, sessions -> words to sessions },
+        settingsRepository.settings,
+    ) { (words, sessions), settings ->
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now(zone)
         val dayStart = today.atStartOfDay(zone).toInstant().toEpochMilli()
@@ -140,16 +143,28 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
                 .sumOf { (it.endedAt!! - it.startedAt).coerceAtLeast(0L) }
             return if (millis <= 0L) 0 else ceil(millis / 60_000.0).toInt()
         }
+        // Last 7 days, oldest first: [6 days ago, ..., today]
         val week = (6 downTo 0).map { offset -> sessionMinutesFor(today.minusDays(offset.toLong())) }
+
+        val totalWords = words.size
+        val learned = words.count { it.reviewCount > 0 }
+        val planDays = settings.planTotalDays
+        val planDailyWords = if (planDays > 0) totalWords / planDays else 0
+
         DashboardStats(
-            dailyGoal = 25,
+            dailyGoal = settings.dailyGoal,
             completedToday = words.count { (it.lastReviewedAt ?: 0L) >= dayStart },
             dueCount = words.count { it.due },
-            totalLearned = words.count { it.reviewCount > 0 },
+            totalLearned = learned,
             mastered = words.count { it.mastery >= 4 },
             streakDays = streak,
             minutesToday = sessionMinutesFor(today),
             weeklyMinutes = week,
+            totalWords = totalWords,
+            planDays = planDays,
+            planDailyWords = planDailyWords,
+            wrongCount = words.count { it.wrongCount > 0 },
+            favoriteCount = words.count { it.favorite },
         )
     }.flowOn(Dispatchers.Default).stateIn(
         scope = viewModelScope,
@@ -363,12 +378,36 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
         _sort.value = value
     }
 
+    fun setPlan(startDate: Long, totalDays: Int) {
+        viewModelScope.launch { settingsRepository.setPlan(startDate, totalDays) }
+    }
+
+    fun setProfileName(value: String) {
+        viewModelScope.launch { settingsRepository.setProfileName(value) }
+    }
+
+    fun setProfileBio(value: String) {
+        viewModelScope.launch { settingsRepository.setProfileBio(value) }
+    }
+
+    fun setProfileAvatarUri(value: String?) {
+        viewModelScope.launch { settingsRepository.setProfileAvatarUri(value) }
+    }
+
+    fun setProfileAvatarSeed(value: String) {
+        viewModelScope.launch { settingsRepository.setProfileAvatarSeed(value) }
+    }
+
     fun setTheme(value: ThemeMode) {
         viewModelScope.launch { settingsRepository.setTheme(value) }
     }
 
     fun setVoice(value: VoiceGender) {
         viewModelScope.launch { settingsRepository.setVoice(value) }
+    }
+
+    fun setVoiceProfile(id: String) {
+        viewModelScope.launch { settingsRepository.setVoiceProfile(id) }
     }
 
     fun setSpeechRate(value: Float) {
@@ -439,5 +478,81 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
             repository.setMastery(id, level)
         }
     }
+
+    // ---------- Sync ----------
+
+    var syncStatus = androidx.compose.runtime.mutableStateOf<SyncStatus>(SyncStatus.Idle)
+        private set
+
+    fun syncUpload() {
+        viewModelScope.launch {
+            syncStatus.value = SyncStatus.Syncing
+            try {
+                val words = repository.allWordsForSync()
+                val arr = org.json.JSONArray()
+                words.forEach { w ->
+                    arr.put(org.json.JSONObject().apply {
+                        put("id", w.id)
+                        put("mastery", w.mastery)
+                        put("reviewCount", w.reviewCount)
+                        put("wrongCount", w.wrongCount)
+                        put("favorite", w.favorite)
+                        put("nextReviewAt", w.nextReviewAt ?: 0)
+                        put("lastReviewedAt", w.lastReviewedAt ?: 0)
+                    })
+                }
+                val ok = com.wordglass.app.data.network.SyncApi.uploadProgress(arr)
+                syncStatus.value = if (ok) SyncStatus.UploadSuccess else SyncStatus.Error("上传失败")
+            } catch (e: Exception) {
+                syncStatus.value = SyncStatus.Error(e.message ?: "未知错误")
+            }
+        }
+    }
+
+    fun syncDownload() {
+        viewModelScope.launch {
+            syncStatus.value = SyncStatus.Syncing
+            try {
+                val arr = com.wordglass.app.data.network.SyncApi.downloadProgress()
+                if (arr == null) {
+                    syncStatus.value = SyncStatus.Error("下载失败")
+                    return@launch
+                }
+                repository.restoreFromSync(arr)
+                syncStatus.value = SyncStatus.DownloadSuccess
+            } catch (e: Exception) {
+                syncStatus.value = SyncStatus.Error(e.message ?: "未知错误")
+            }
+        }
+    }
+
+    // ---------- Auto Update ----------
+
+    var updateInfo = androidx.compose.runtime.mutableStateOf<com.wordglass.app.data.network.SyncApi.UpdateInfo?>(null)
+        private set
+
+    fun checkUpdate() {
+        viewModelScope.launch {
+            val info = com.wordglass.app.data.network.SyncApi.checkUpdate("1.0.0-final-debug")
+            if (info.hasUpdate) {
+                updateInfo.value = info
+            }
+        }
+    }
+
+    fun dismissUpdate() {
+        updateInfo.value = null
+    }
 }
+
+sealed class SyncStatus {
+    data object Idle : SyncStatus()
+    data object Syncing : SyncStatus()
+    data object UploadSuccess : SyncStatus()
+    data object DownloadSuccess : SyncStatus()
+    data class Error(val message: String) : SyncStatus()
+}
+
+
+
 

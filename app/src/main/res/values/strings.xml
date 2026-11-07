@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">WordGlass</string>
+    <string name="widget_description">显示今日学习进度和待复习数</string>
 </resources>

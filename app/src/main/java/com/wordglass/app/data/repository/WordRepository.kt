@@ -104,6 +104,55 @@ class WordRepository(
         dao.bumpWrong(id, System.currentTimeMillis())
     }
 
+    /** Get all word states for sync upload. */
+    suspend fun allWordsForSync(): List<com.wordglass.app.model.Word> {
+        val words = dao.allWords()
+        val states = dao.allStates().associateBy { it.wordId }
+        return words.map { entity ->
+            val state = states[entity.id]
+            com.wordglass.app.model.Word(
+                id = entity.id,
+                word = entity.word,
+                phonetic = entity.phonetic ?: "",
+                meaning = entity.meaning ?: "",
+                example = entity.example,
+                translation = entity.translation,
+                root = entity.root,
+                affix = entity.affix,
+                usage = entity.usage,
+                mastery = state?.masteryLevel ?: 0,
+                favorite = state?.isFavorite ?: false,
+                correctCount = state?.correctCount ?: 0,
+                wrongCount = state?.wrongCount ?: 0,
+                reviewCount = state?.reviewCount ?: 0,
+                lastReviewedAt = state?.lastReviewedAt,
+                nextReviewAt = state?.nextReviewAt,
+                due = state?.nextReviewAt?.let { it <= System.currentTimeMillis() } ?: false,
+                sourceNumber = entity.sourceNumber,
+            )
+        }
+    }
+
+    /** Restore word states from sync download. */
+    suspend fun restoreFromSync(arr: org.json.JSONArray) {
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            val id = obj.optInt("id", -1)
+            if (id < 0) continue
+            val existing = dao.state(id) ?: continue
+            val updated = existing.copy(
+                masteryLevel = obj.optInt("mastery", existing.masteryLevel),
+                reviewCount = obj.optInt("reviewCount", existing.reviewCount),
+                wrongCount = obj.optInt("wrongCount", existing.wrongCount),
+                isFavorite = obj.optBoolean("favorite", existing.isFavorite),
+                nextReviewAt = obj.optLong("nextReviewAt", existing.nextReviewAt ?: 0L).takeIf { it > 0 },
+                lastReviewedAt = obj.optLong("lastReviewedAt", existing.lastReviewedAt ?: 0L).takeIf { it > 0 },
+                updatedAt = System.currentTimeMillis(),
+            )
+            dao.upsertState(updated)
+        }
+    }
+
     suspend fun recordSession(
         mode: StudyMode,
         startedAt: Long,
