@@ -8,12 +8,21 @@ WordGlass 是一款 Android 原生英语核心词汇学习应用。视觉目标�
 
 ## 交付物
 
-- 内测 APK：`dist/WordGlass-0.3.0-editorial-debug.apk`
-- SHA-256：`FD5D9CA85EFB76F2C38CABC733FFF66DBE6C4A352B32F77187D4F3F440E6D32E`
+- 内测 APK：`dist/WordGlass-0.4.1-beta-debug.apk`
+- SHA-256：`6B07A393DD768E39026F67A90250BD1623DD5B5CAC7C61A3A65DEE6DA620D5BC`
 - 一键安装（手机连接并授权 USB 调试后）：`scripts/install-beta.ps1`
 - 四页截图 + 崩溃日志 + gfxinfo 验收：`scripts/verify-beta.ps1`
 - Debug 包名：`com.wordglass.app.debug`
 - 正式包名：`com.wordglass.app`
+
+## 0.4.x 导航栏（FlClash 形态）
+
+- 形态：椭圆胶囊液滴（`PrismalCapsule`，shortestSide/2 圆角）
+- 配色：纯色液态玻璃（水样），透明玻璃折射底栏内容
+- 布局：`_dockLayout` 公式（`pitch = (span-8)/count`，`lens = pitch+8`，`inset = 4`）
+- 几何：`_lensRect` 公式（`lensWidth = (width+growth)*(1+stretch)`）
+- 拖动：1:1 跟手，不压扁、不拉伸（已按用户要求移除 `JELLY_*` 挤压）
+- 透明：整屏玻璃采样层已移除，避免软件 GL 设备 ANR
 
 ## 0.3.0 视觉重构（Apple Minimalism × Editorial）
 

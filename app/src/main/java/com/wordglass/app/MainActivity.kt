@@ -109,11 +109,9 @@ fun WordGlassApp(
             settings.themeMode == ThemeMode.DARK
         CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
             Box(Modifier.fillMaxSize()) {
-                AmbientBackground(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .prismalGlassLayer(backdrop),
-                )
+                // Plain background: the whole-screen glass capture layer is removed.
+                // It recorded every frame and caused ANR on software-GL devices.
+                AmbientBackground(modifier = Modifier.fillMaxSize())
                 NavHost(
                     navController = navController,
                     startDestination = safeStart,
@@ -210,5 +208,7 @@ private fun NavHostController.navigateTab(route: String) {
         restoreState = true
     }
 }
+
+
 
 
