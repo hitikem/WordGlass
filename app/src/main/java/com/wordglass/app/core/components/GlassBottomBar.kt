@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -63,10 +64,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.styropyr0.prismal.shapes.PrismalCapsule
-import com.styropyr0.prismal.shapes.PrismalRoundedRectangle
-import com.styropyr0.prismal.sources.prismalGlassLayer
-import com.styropyr0.prismal.sources.rememberPrismalGlassLayer
 import com.wordglass.app.core.design.WgTheme
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -85,37 +82,19 @@ val WgTabs = listOf(
     WgTab("profile", "我的", Icons.Rounded.Person),
 )
 
-// FlClash constants — reverse-engineered from libapp.so + prism_ui/navigation_dock.dart
+// FlClash constants (prism_ui/navigation_dock.dart)
 private const val BAR_HEIGHT = 62f
 private const val BAR_PADDING = 4f
 private const val EDGE_MARGIN = 21f
 private const val SHADOW_ROOM = 8f
 private const val LENS_GROWTH = 8f
-private const val JELLY_ASPECT = 1.4f
-private const val JELLY_STRETCH = 0.2f
-private const val PLATTER_ALPHA = 0.85f
 
 /**
- * FlClash NavigationDock — 1:1 port from prism_ui/navigation_dock.dart.
+ * FlClash-style liquid dock.
  *
- * _lensRect:
- *   growth = _lensGrowth * 2 * lift
- *   lensWidth  = (width + growth) * (1 + stretch)
- *   lensHeight = (height + growth) * (1 - stretch * _jellyAspect)
- *   rect = Rect.fromLTWH(
- *     (position + 0.5) * pitch - lensWidth / 2,
- *     (height - lensHeight) / 2,
- *     lensWidth, lensHeight
- *   )
- *
- * _dockLayout:
- *   pitch = (span - _barPadding * 2) / count
- *   lens = pitch + _barPadding * 2
- *   inset = _barPadding
- *
- * _Lens platter:
- *   tone = dark ? 4.0 : 90.0
- *   platter = Color(hct.toInt()).withValues(alpha: 0.85)
+ * Pure Compose rendering (no AGSL/RenderEffect) so it runs on software-GL devices.
+ * The droplet is a water-tinted capsule: gradient fill + specular ring + highlight.
+ * Geometry follows FlClash's _lensRect / _dockLayout formulas.
  */
 @Composable
 fun GlassBottomBar(
@@ -127,18 +106,21 @@ fun GlassBottomBar(
     val selectedIndex = WgTabs.indexOfFirst { it.route == selectedRoute }.coerceAtLeast(0)
     val haptics = LocalHapticFeedback.current
     val density = LocalDensity.current
-    val navLayer = rememberPrismalGlassLayer()
-    navLayer.readSamplingState()
-    val barShape = remember { PrismalRoundedRectangle(22.dp) }
-    val dropletShape = remember { PrismalCapsule() }
+    val barShape = remember { RoundedCornerShape(22.dp) }
+    val dropletShape = remember { RoundedCornerShape(31.dp) }
 
+    // The bar is exactly BAR_HEIGHT tall. Do NOT use fillMaxSize on the inner container: inside a
+    // wrap-content parent that expands to the full screen and the drag layer would then swallow
+    // every touch on the page behind it.
+    val barHeight = (BAR_HEIGHT + SHADOW_ROOM * 2).dp
     Box(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = EDGE_MARGIN.dp, vertical = SHADOW_ROOM.dp),
+            .padding(horizontal = EDGE_MARGIN.dp)
+            .height(barHeight),
     ) {
-        BoxWithConstraints(Modifier.fillMaxSize()) {
+        BoxWithConstraints(Modifier.fillMaxWidth().height(barHeight)) {
             val span = maxWidth
             val itemWidthPx = with(density) { (span / WgTabs.size).toPx() }
 
@@ -160,8 +142,8 @@ fun GlassBottomBar(
             val jelly by animateFloatAsState(
                 targetValue = if (dragging) 1f else 0f,
                 animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioLowBouncy,
-                    stiffness = Spring.StiffnessLow,
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow,
                 ),
                 label = "jelly",
             )
@@ -172,8 +154,8 @@ fun GlassBottomBar(
                         initialValue = position.floatValue,
                         targetValue = selectedIndex.toFloat(),
                         animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioLowBouncy,
-                            stiffness = Spring.StiffnessLow,
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium,
                         ),
                     ) { value, _ -> position.floatValue = value }
                 }
@@ -187,16 +169,15 @@ fun GlassBottomBar(
                 }
             }
 
-            // Bar content
+            // Bar: transparent slab with a hairline border
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
                     .height(BAR_HEIGHT.dp)
                     .clip(barShape)
-                    .prismalGlassLayer(navLayer)
-                    .background(Color.Transparent)
-                    .border(0.8.dp, colors.glassStroke.copy(alpha = 0.25f), barShape),
+                    .background(colors.navFill.copy(alpha = 0.55f))
+                    .border(0.8.dp, colors.glassStroke.copy(alpha = 0.35f), barShape),
             ) {
                 Row(Modifier.fillMaxSize()) {
                     WgTabs.forEachIndexed { index, tab ->
@@ -204,8 +185,8 @@ fun GlassBottomBar(
                         val tint by animateColorAsState(
                             targetValue = if (selected) colors.blue else colors.inkTertiary,
                             animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessLow,
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium,
                             ),
                             label = "dockTint",
                         )
@@ -245,22 +226,10 @@ fun GlassBottomBar(
                 }
             }
 
-            // Droplet — FlClash _lensRect formula, no squash during drag
+            // Droplet — water-tinted capsule, pure Compose (no AGSL)
             val growthPx = LENS_GROWTH * 2 * jelly
             val lensW = lensWidthPx + growthPx
             val lensH = lensHeightPx + growthPx
-
-            // Platter color — FlClash _Lens (verified 0xD9 = 0.85*255)
-            val platterColor = remember(colors) {
-                val base = if (colors.isDark) colors.blue else colors.blueDeep
-                val tone = if (colors.isDark) 4f / 100f else 90f / 100f
-                Color(
-                    red = base.red * (1f - tone) + tone,
-                    green = base.green * (1f - tone) + tone,
-                    blue = base.blue * (1f - tone) + tone,
-                    alpha = PLATTER_ALPHA,
-                )
-            }
 
             Box(
                 modifier = Modifier
@@ -274,22 +243,20 @@ fun GlassBottomBar(
                     .width(with(density) { lensW.toDp() })
                     .height(with(density) { lensH.toDp() }),
             ) {
-                // Water-like liquid glass: transparent, pure colour tint, refracts the nav layer
-                com.styropyr0.prismal.PrismalGlassSurface(
-                    backdrop = navLayer,
-                    modifier = Modifier.fillMaxSize(),
-                    shape = { dropletShape },
-                    blurRadius = 0.dp,
-                    surfaceColor = Color.White.copy(alpha = 0.06f),
-                    tint = colors.cyan.copy(alpha = 0.18f),
-                    tintAlpha = 0.22f,
-                    saturation = 1.6f,
-                    refractionHeightPx = with(density) { 18.dp.toPx() },
-                    refractionAmountPx = with(density) { 24.dp.toPx() },
-                    chromaticAberration = 0.05f,
-                ) {
-                    Box(Modifier.fillMaxSize())
-                }
+                // Water tint: soft cyan-blue gradient fill
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .clip(dropletShape)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    colors.cyan.copy(alpha = 0.32f),
+                                    colors.cyan.copy(alpha = 0.18f),
+                                ),
+                            ),
+                        ),
+                )
                 // Specular ring
                 Box(
                     Modifier
@@ -299,8 +266,8 @@ fun GlassBottomBar(
                             Brush.verticalGradient(
                                 listOf(
                                     Color.White.copy(alpha = 0.85f),
-                                    colors.cyan.copy(alpha = 0.30f),
-                                    Color.White.copy(alpha = 0.10f),
+                                    colors.cyan.copy(alpha = 0.35f),
+                                    Color.White.copy(alpha = 0.12f),
                                 ),
                             ),
                             dropletShape,
@@ -314,17 +281,19 @@ fun GlassBottomBar(
                         .size(18.dp)
                         .background(
                             Brush.radialGradient(
-                                listOf(Color.White.copy(alpha = 0.48f), Color.Transparent),
+                                listOf(Color.White.copy(alpha = 0.50f), Color.Transparent),
                             ),
                             RoundedCornerShape(50),
                         ),
                 )
             }
 
-            // Full-bar drag gesture
+            // Drag layer: confined to the bar itself so page content stays tappable.
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .height(BAR_HEIGHT.dp)
                     .pointerInput(pitchPx, selectedIndex) {
                         val touchSlop = viewConfiguration.touchSlop
                         awaitEachGesture {
@@ -354,8 +323,8 @@ fun GlassBottomBar(
                                                 initialValue = position.floatValue,
                                                 targetValue = target.toFloat(),
                                                 animationSpec = spring(
-                                                    dampingRatio = Spring.DampingRatioLowBouncy,
-                                                    stiffness = Spring.StiffnessLow,
+                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                    stiffness = Spring.StiffnessMedium,
                                                 ),
                                             ) { value, _ -> position.floatValue = value }
                                         }

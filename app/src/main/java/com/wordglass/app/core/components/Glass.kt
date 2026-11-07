@@ -53,13 +53,7 @@ fun GlassCard(
     val refractionAmount = with(density) { 22.dp.toPx() }
 
     Box(
-        modifier = modifier.shadow(
-            elevation = elevation,
-            shape = shape,
-            clip = false,
-            ambientColor = colors.shadow,
-            spotColor = colors.shadow,
-        ),
+        modifier = modifier,
     ) {
         // The glass layer fills the measured card, but does not participate in sizing.
         Box(

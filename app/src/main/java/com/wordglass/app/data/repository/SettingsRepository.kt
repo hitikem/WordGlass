@@ -10,6 +10,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.wordglass.app.model.AppSettings
 import com.wordglass.app.model.ThemeMode
 import com.wordglass.app.model.VoiceGender
+import com.wordglass.app.model.VoicePresets
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -32,6 +33,7 @@ class SettingsRepository(private val context: Context) {
                 voice = prefs[VOICE]?.let { name ->
                     VoiceGender.entries.firstOrNull { it.name == name }
                 } ?: VoiceGender.FEMALE,
+                voiceProfileId = prefs[VOICE_PROFILE] ?: "youdao_real",
                 speechRate = (prefs[RATE] ?: 0.9f).coerceIn(0.5f, 1.2f),
                 autoPlay = prefs[AUTO_PLAY] ?: false,
                 dailyGoal = (prefs[DAILY_GOAL] ?: 25).coerceIn(5, 100),
@@ -44,6 +46,14 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setVoice(value: VoiceGender) {
         context.settingsDataStore.edit { it[VOICE] = value.name }
+    }
+
+    suspend fun setVoiceProfile(id: String) {
+        val profile = VoicePresets.byId(id)
+        context.settingsDataStore.edit {
+            it[VOICE_PROFILE] = id
+            it[VOICE] = profile.gender.name
+        }
     }
 
     suspend fun setSpeechRate(value: Float) {
@@ -61,6 +71,7 @@ class SettingsRepository(private val context: Context) {
     private companion object {
         val THEME = stringPreferencesKey("theme")
         val VOICE = stringPreferencesKey("voice")
+        val VOICE_PROFILE = stringPreferencesKey("voice_profile")
         val RATE = floatPreferencesKey("speech_rate")
         val AUTO_PLAY = booleanPreferencesKey("auto_play")
         val DAILY_GOAL = intPreferencesKey("daily_goal")

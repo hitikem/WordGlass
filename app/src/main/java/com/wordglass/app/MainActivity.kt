@@ -42,6 +42,8 @@ import com.wordglass.app.core.components.GlassBottomBar
 import com.wordglass.app.core.design.WgTheme
 import com.wordglass.app.core.design.WordGlassTheme
 import com.wordglass.app.data.rememberSystemSpeechService
+import com.wordglass.app.data.speech.AudioCache
+import com.wordglass.app.data.speech.YoudaoAudioService
 import com.wordglass.app.model.ThemeMode
 import com.wordglass.app.ui.LocalGlassBackdrop
 import com.wordglass.app.ui.WordGlassViewModel
@@ -85,7 +87,12 @@ fun WordGlassApp(
         it == Routes.HOME || it == Routes.STUDY || it == Routes.LIBRARY || it == Routes.PROFILE
     } ?: Routes.HOME
     val settings by vm.settings.collectAsStateWithLifecycle()
-    val speaker = rememberSystemSpeechService(settings.voice, settings.speechRate)
+    val systemSpeaker = rememberSystemSpeechService(settings.voice, settings.speechRate)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val speaker = androidx.compose.runtime.remember {
+        val cacheDir = java.io.File(context.cacheDir, "audio")
+        YoudaoAudioService(AudioCache(cacheDir), systemSpeaker, settings.voice)
+    }
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: Routes.HOME
@@ -208,6 +215,8 @@ private fun NavHostController.navigateTab(route: String) {
         restoreState = true
     }
 }
+
+
 
 
 

@@ -29,7 +29,7 @@ class SystemSpeechService(context: Context) :
     private var pendingGender: VoiceGender = VoiceGender.FEMALE
     private var pendingRate: Float = 0.9f
 
-    var isReady by mutableStateOf(false)
+    override var isReady by mutableStateOf(false)
         private set
 
     init {
@@ -110,3 +110,4 @@ fun rememberSystemSpeechService(gender: VoiceGender, rate: Float): SpeechService
     }
     return speaker
 }
+
