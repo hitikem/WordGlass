@@ -378,7 +378,7 @@ private fun LibrarySummary(
         Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = "当前本地词库",
+                    text = "当前演示词库",
                     style = WgType.eyebrow,
                     color = colors.blue,
                 )
@@ -439,83 +439,100 @@ private fun WordListRow(
 ) {
     val colors = WgTheme.colors
     val mastery = WordMastery.from(word.mastery)
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onClick,
-                )
-                .padding(vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+    val tint = masteryTint(word.mastery)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(colors.glassFill.copy(alpha = 0.72f))
+            .border(0.8.dp, colors.glassStroke.copy(alpha = 0.40f), RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(42.dp)
+                .clip(RoundedCornerShape(13.dp))
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            tint.copy(alpha = 0.18f),
+                            tint.copy(alpha = 0.06f),
+                        ),
+                    ),
+                ),
+            contentAlignment = Alignment.Center,
         ) {
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = word.word,
-                        style = WgType.wordRow,
-                        color = colors.ink,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (word.phonetic.isNotBlank()) {
-                        Spacer(Modifier.size(7.dp))
-                        Text(
-                            text = "/${word.phonetic}/",
-                            style = WgType.phonetic,
-                            color = colors.inkTertiary,
-                            fontSize = 11.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-                Spacer(Modifier.height(3.dp))
+            Text(
+                text = word.word.take(1).uppercase(),
+                style = WgType.wordRow,
+                color = tint,
+            )
+        }
+        Spacer(Modifier.size(11.dp))
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = word.meaning,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.inkSecondary,
+                    text = word.word,
+                    style = WgType.wordRow,
+                    color = colors.ink,
+                    maxLines = 1,
+                )
+                Spacer(Modifier.size(6.dp))
+                Text(
+                    text = word.phonetic,
+                    style = WgType.phonetic,
+                    color = colors.inkTertiary,
+                    fontSize = 11.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Spacer(Modifier.size(10.dp))
-            Column(horizontalAlignment = Alignment.End) {
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = word.meaning,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.inkSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Box(
+                Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(tint.copy(alpha = 0.10f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            ) {
                 Text(
                     text = mastery.label,
                     style = MaterialTheme.typography.labelSmall,
-                    color = colors.inkTertiary,
-                    fontSize = 10.sp,
+                    color = tint,
+                    fontSize = 9.sp,
                 )
-                Spacer(Modifier.height(2.dp))
-                Box(
-                    Modifier
-                        .size(26.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            role = Role.Button,
-                            onClick = onToggleFavorite,
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = if (word.favorite) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
-                        contentDescription = if (word.favorite) "取消收藏" else "收藏",
-                        tint = if (word.favorite) colors.blue else colors.inkTertiary,
-                        modifier = Modifier.size(15.dp),
-                    )
-                }
+            }
+            Spacer(Modifier.height(3.dp))
+            Box(
+                Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        role = Role.Button,
+                        onClick = onToggleFavorite,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = if (word.favorite) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
+                    contentDescription = if (word.favorite) "取消收藏" else "收藏",
+                    tint = if (word.favorite) colors.blue else colors.inkTertiary,
+                    modifier = Modifier.size(16.dp),
+                )
             }
         }
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(colors.divider),
-        )
     }
 }
 
@@ -687,4 +704,3 @@ private fun WordDetailSheet(
         )
     }
 }
-
