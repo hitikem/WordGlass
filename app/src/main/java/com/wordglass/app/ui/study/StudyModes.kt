@@ -632,7 +632,7 @@ fun SwipeStudyMode(
                                             targetValue = direction * widthPx * 1.5f,
                                             animationSpec = tween(200),
                                         ) { value, _ -> dragX = value }
-                                        onRate(if (direction > 0) StudyRating.GOOD else StudyRating.AGAIN)
+                                        onRate(if (direction > 0) StudyRating.AGAIN else StudyRating.GOOD)
                                         dragX = 0f
                                     }
                                 } else {

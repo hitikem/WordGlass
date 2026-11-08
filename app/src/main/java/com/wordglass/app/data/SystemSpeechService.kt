@@ -73,15 +73,29 @@ class SystemSpeechService(context: Context) :
     }
 
     private fun applyVoice(engine: TextToSpeech) {
-        val usVoices = engine.voices.orEmpty()
-            .filter { it.locale.language == Locale.ENGLISH.language && it.locale.country == "US" }
-        if (usVoices.isEmpty()) {
+        val allVoices = engine.voices.orEmpty().toList()
+        if (allVoices.isEmpty()) {
             engine.language = Locale.US
             return
         }
+        
+        // Try to find English voices
+        val englishVoices = allVoices.filter { 
+            it.locale.language == Locale.ENGLISH.language 
+        }
+        val candidates = if (englishVoices.isNotEmpty()) englishVoices else allVoices
+        
         val preferred = when (pendingGender) {
-            VoiceGender.FEMALE -> usVoices.firstOrNull { it.looksFemale() } ?: usVoices.first()
-            VoiceGender.MALE -> usVoices.firstOrNull { it.looksMale() } ?: usVoices.last()
+            VoiceGender.FEMALE -> {
+                candidates.firstOrNull { it.looksFemale() } 
+                    ?: candidates.firstOrNull { !it.looksMale() }
+                    ?: candidates.first()
+            }
+            VoiceGender.MALE -> {
+                candidates.firstOrNull { it.looksMale() } 
+                    ?: candidates.firstOrNull { !it.looksFemale() }
+                    ?: candidates.last()
+            }
         }
         runCatching { engine.voice = preferred }
     }
@@ -91,22 +105,33 @@ class SystemSpeechService(context: Context) :
      * Each voice is classified by name heuristics for gender and locale.
      */
     fun enumerateFreeVoices(): List<com.wordglass.app.model.VoiceProfile> {
-        val engine = tts ?: return emptyList()
-        val voices = engine.voices.orEmpty().toList()
+        val voices = mutableListOf<com.wordglass.app.model.VoiceProfile>()
+        
+        // Cloud voices (always available)
+        voices.add(com.wordglass.app.model.VoiceProfile("youdao_real", VoiceGender.MALE, "有道真人发音（美式）", "en-US", true))
+        voices.add(com.wordglass.app.model.VoiceProfile("google_us", VoiceGender.FEMALE, "Google 女声·美式", "en-US"))
+        voices.add(com.wordglass.app.model.VoiceProfile("google_uk", VoiceGender.FEMALE, "Google 女声·英式", "en-GB"))
+        voices.add(com.wordglass.app.model.VoiceProfile("google_au", VoiceGender.FEMALE, "Google 女声·澳洲", "en-AU"))
+        voices.add(com.wordglass.app.model.VoiceProfile("ms_aria", VoiceGender.FEMALE, "微软 Aria·女声·自然", "en-US"))
+        voices.add(com.wordglass.app.model.VoiceProfile("ms_guy", VoiceGender.MALE, "微软 Guy·男声·自然", "en-US"))
+        voices.add(com.wordglass.app.model.VoiceProfile("ms_jenny", VoiceGender.FEMALE, "微软 Jenny·女声·亲切", "en-US"))
+        voices.add(com.wordglass.app.model.VoiceProfile("ms_ryan", VoiceGender.MALE, "微软 Ryan·男声·英式", "en-GB"))
+
+        // System TTS voices
+        val engine = tts
+        if (engine != null && isReady) {
+            engine.voices.orEmpty()
+                .filter { it.locale.language == Locale.ENGLISH.language }
+                .forEach { v ->
+                    voices.add(com.wordglass.app.model.VoiceProfile(
+                        id = "sys_${v.name}",
+                        gender = if (v.looksFemale()) VoiceGender.FEMALE else VoiceGender.MALE,
+                        displayName = "系统 ${v.name}",
+                        locale = v.locale.toLanguageTag(),
+                    ))
+                }
+        }
         return voices
-            .filter { it.locale.language == Locale.ENGLISH.language }
-            .map { v ->
-                val gender = if (v.looksFemale()) VoiceGender.FEMALE else VoiceGender.MALE
-                val isReal = false
-                com.wordglass.app.model.VoiceProfile(
-                    id = "sys_${v.name}",
-                    gender = gender,
-                    displayName = "${v.name} (${v.locale.toLanguageTag()})",
-                    locale = v.locale.toLanguageTag(),
-                    isRealHuman = isReal,
-                )
-            }
-            .sortedWith(compareBy({ it.locale }, { it.displayName }))
     }
 
     /**
@@ -115,10 +140,25 @@ class SystemSpeechService(context: Context) :
     fun speakWithVoice(text: String, voiceName: String) {
         val engine = tts ?: return
         if (!isReady) return
-        val voice = engine.voices.orEmpty().firstOrNull { it.name == voiceName }
+        
+        // Map voice IDs to actual TTS voices
+        val voice = when {
+            // Direct name match
+            else -> engine.voices.orEmpty().firstOrNull { 
+                it.name == voiceName || it.name.contains(voiceName, ignoreCase = true) 
+            }
+        }
+        
         if (voice != null) {
             runCatching { engine.voice = voice }
+        } else {
+            // Try gender-based selection
+            val isMale = voiceName.contains("male", ignoreCase = true) && 
+                        !voiceName.contains("female", ignoreCase = true)
+            pendingGender = if (isMale) VoiceGender.MALE else VoiceGender.FEMALE
+            applyVoice(engine)
         }
+        
         engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "wordglass-preview")
     }
 
@@ -128,13 +168,17 @@ class SystemSpeechService(context: Context) :
     private fun Voice.looksFemale(): Boolean {
         val n = name.lowercase(Locale.US)
         return n.contains("female") || n.contains("aria") || n.contains("jenny") ||
-            n.contains("samantha") || n.contains("victoria") || n.contains("salli")
+            n.contains("samantha") || n.contains("victoria") || n.contains("salli") ||
+            n.contains("female") || n.contains("woman") || n.contains("girl") ||
+            n.contains("michelle") || n.contains("sonia") || n.contains("zira")
     }
 
     private fun Voice.looksMale(): Boolean {
         val n = name.lowercase(Locale.US)
         return n.contains("male") || n.contains("guy") || n.contains("david") ||
-            n.contains("alex") || n.contains("daniel") || n.contains("fred")
+            n.contains("alex") || n.contains("daniel") || n.contains("fred") ||
+            n.contains("man") || n.contains("boy") || n.contains("ryan") ||
+            n.contains("mark") || n.contains("richard") || n.contains("thomas")
     }
 }
 

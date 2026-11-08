@@ -183,13 +183,7 @@ fun StudyScreen(
                         StudyMode.PRONUNCIATION -> PronunciationPracticeScreen(
                             word = word,
                             onSpeak = onSpeak,
-                            onRate = vm::rate,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                        StudyMode.HANDWRITING -> HandwritingPracticeScreen(
-                            word = word,
-                            onRate = vm::rate,
-                            onSpeak = onSpeak,
+                            onDone = { vm.rate(com.wordglass.app.model.StudyRating.GOOD) },
                             modifier = Modifier.fillMaxSize(),
                         )
                         StudyMode.GAME -> WordGameScreen(
@@ -348,8 +342,9 @@ private fun modeIcon(mode: StudyMode): ImageVector = when (mode) {
     StudyMode.DICTATION -> Icons.Rounded.Keyboard
     StudyMode.SPELLING -> Icons.Rounded.Edit
     StudyMode.PRONUNCIATION -> Icons.Rounded.Mic
-    StudyMode.HANDWRITING -> Icons.Rounded.Brush
     StudyMode.GAME -> Icons.Rounded.SportsEsports
 }
+
+
 
 

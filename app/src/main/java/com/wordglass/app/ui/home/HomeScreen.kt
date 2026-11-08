@@ -2,7 +2,9 @@ package com.wordglass.app.ui.home
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -74,9 +77,11 @@ fun HomeScreen(
     words: List<Word>,
     dark: Boolean,
     userName: String,
+    settings: com.wordglass.app.model.AppSettings,
     onToggleTheme: () -> Unit,
     onStartStudy: () -> Unit,
     onOpenLibrary: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = WgTheme.colors
@@ -111,9 +116,11 @@ fun HomeScreen(
                 dateLine = dateLine,
                 greeting = greeting,
                 userName = userName,
+                settings = settings,
                 dark = dark,
                 backdrop = backdrop,
                 onToggleTheme = onToggleTheme,
+                onAvatarClick = onOpenSettings,
             )
         }
 
@@ -390,9 +397,11 @@ private fun HomeHeader(
     dateLine: String,
     greeting: String,
     userName: String,
+    settings: com.wordglass.app.model.AppSettings,
     dark: Boolean,
     backdrop: PrismalBackdrop,
     onToggleTheme: () -> Unit,
+    onAvatarClick: () -> Unit,
 ) {
     val colors = WgTheme.colors
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -409,12 +418,37 @@ private fun HomeHeader(
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = "W",
-                        style = WgType.label,
-                        color = Color.White,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
+                    // Avatar with white circle border (always visible)
+                    val avatarFile = settings.profileAvatarUri?.let { java.io.File(it) }
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, Color.White.copy(alpha = 0.8f), CircleShape)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) { onAvatarClick() },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (avatarFile != null && avatarFile.exists()) {
+                            coil.compose.AsyncImage(
+                                model = avatarFile,
+                                contentDescription = "头像",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop,
+                            )
+                        } else {
+                            Text(
+                                text = settings.profileName.firstOrNull()?.uppercase() ?: "W",
+                                style = WgType.label,
+                                color = Color.White,
+                                fontWeight = FontWeight.ExtraBold,
+                            )
+                        }
+                    }
                 }
                 Spacer(Modifier.size(9.dp))
                 Column {
@@ -444,12 +478,6 @@ private fun HomeHeader(
                 modifier = Modifier.padding(top = 3.dp),
             )
         }
-        GlassIconButton(
-            backdrop = backdrop,
-            icon = if (dark) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
-            contentDescription = if (dark) "切换到浅色模式" else "切换到深色模式",
-            onClick = onToggleTheme,
-        )
     }
 }
 

@@ -154,7 +154,7 @@ object PronunciationScorer {
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
 
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+        val intent = android.content.Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
@@ -162,6 +162,4 @@ object PronunciationScorer {
         }
         recognizer.startListening(intent)
     }
-
-    private class Intent(action: String) : android.content.Intent(action)
 }

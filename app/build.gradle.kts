@@ -14,8 +14,8 @@ android {
         applicationId = "com.wordglass.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 21
-        versionName = "2.3.1"
+        versionCode = 25
+        versionName = "2.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -116,6 +116,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }
+
 
 
 

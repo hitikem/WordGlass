@@ -426,6 +426,12 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch { settingsRepository.setDailyGoal(value) }
     }
 
+    fun speakCloudVoice(text: String, voiceId: String, locale: String, cacheDir: java.io.File) {
+        viewModelScope.launch {
+            com.wordglass.app.data.speech.CloudTtsService.speakVoice(text, voiceId, locale, cacheDir)
+        }
+    }
+
     fun exportBackup(uri: Uri) {
         viewModelScope.launch {
             runCatching {

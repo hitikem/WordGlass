@@ -50,7 +50,6 @@ enum class StudyMode(val label: String, val eyebrow: String) {
     DICTATION("听写", "TYPE"),
     SPELLING("拼写", "SPELL"),
     PRONUNCIATION("跟读", "SPEAK"),
-    HANDWRITING("手写", "WRITE"),
     GAME("游戏", "PLAY"),
 }
 
@@ -116,3 +115,4 @@ enum class VoiceGender(val label: String) {
     FEMALE("女声"),
     MALE("男声"),
 }
+

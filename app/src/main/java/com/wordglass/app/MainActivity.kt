@@ -4,6 +4,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.runtime.remember
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -79,6 +80,7 @@ private object Routes {
     const val LIBRARY = "library"
     const val PROFILE = "profile"
     const val SEARCH = "search"
+    const val SETTINGS = "settings"
 }
 
 @Composable
@@ -92,8 +94,8 @@ fun WordGlassApp(
     val settings by vm.settings.collectAsStateWithLifecycle()
     val systemSpeaker = rememberSystemSpeechService(settings.voice, settings.speechRate)
     val context = androidx.compose.ui.platform.LocalContext.current
+    val cacheDir = remember { java.io.File(context.cacheDir, "audio") }
     val speaker = androidx.compose.runtime.remember {
-        val cacheDir = java.io.File(context.cacheDir, "audio")
         YoudaoAudioService(AudioCache(cacheDir), systemSpeaker, settings.voice)
     }
     val navController = rememberNavController()
@@ -152,7 +154,11 @@ fun WordGlassApp(
                             onOpenLibrary = {
                                 navController.navigateTab(Routes.LIBRARY)
                             },
+                            onOpenSettings = {
+                                navController.navigate(Routes.SETTINGS)
+                            },
                             userName = settings.profileName,
+                            settings = settings,
                         )
                     }
                     composable(Routes.STUDY) {
@@ -183,6 +189,46 @@ fun WordGlassApp(
                             onSpeak = { speaker.speak(it) },
                         )
                     }
+                    composable(Routes.SETTINGS) {
+                        com.wordglass.app.ui.settings.SettingsScreen(
+                            settings = settings,
+                            onBack = { navController.popBackStack() },
+                            onThemeChange = vm::setTheme,
+                            onVoiceChange = vm::setVoice,
+                            onSpeechRateChange = vm::setSpeechRate,
+                            onAutoPlayChange = vm::setAutoPlay,
+                            onDailyGoalChange = vm::setDailyGoal,
+                            onSpeakSample = { speaker.speak("change") },
+                            onImport = {
+                                importLauncher.launch(arrayOf("application/json", "text/plain"))
+                            },
+                            onBackup = {
+                                backupLauncher.launch("wordglass-backup-${LocalDate.now()}.json")
+                            },
+                            onRestore = {
+                                restoreLauncher.launch(arrayOf("application/json", "text/plain"))
+                            },
+                            onNameChange = { vm.setProfileName(it) },
+                            onBioChange = { vm.setProfileBio(it) },
+                            onAvatarUriChange = { vm.setProfileAvatarUri(it) },
+                            onVoiceProfileChange = { vm.setVoiceProfile(it.id) },
+                            availableVoices = systemSpeaker.enumerateFreeVoices(),
+                            isLoadingVoices = !systemSpeaker.engineReady,
+                            onPreviewVoice = { voice ->
+                                if (voice.isRealHuman) {
+                                    speaker.speak("change")
+                                } else if (voice.id.startsWith("google_") || voice.id.startsWith("ms_") || voice.id.startsWith("youdao")) {
+                                    vm.speakCloudVoice("change", voice.id, voice.locale, cacheDir)
+                                } else {
+                                    systemSpeaker.speakWithVoice("change", voice.id.removePrefix("sys_"))
+                                }
+                            },
+                            onSyncUpload = { vm.syncUpload() },
+                            onSyncDownload = { vm.syncDownload() },
+                            onCheckUpdate = { vm.checkUpdate() },
+                            syncStatus = "就绪",
+                        )
+                    }
                     composable(Routes.PROFILE) {
                         ProfileScreen(
                             backdrop = backdrop,
@@ -209,7 +255,6 @@ fun WordGlassApp(
                             },
                             onNameChange = { vm.setProfileName(it) },
                             onBioChange = { vm.setProfileBio(it) },
-                            onAvatarSeedChange = { vm.setProfileAvatarSeed(it) },
                             onAvatarUriChange = { vm.setProfileAvatarUri(it) },
                             onVoiceProfileChange = { vm.setVoiceProfile(it.id) },
                             availableVoices = systemSpeaker.enumerateFreeVoices(),
@@ -217,6 +262,8 @@ fun WordGlassApp(
                             onPreviewVoice = { voice ->
                                 if (voice.isRealHuman) {
                                     speaker.speak("change")
+                                } else if (voice.id.startsWith("google_") || voice.id.startsWith("ms_") || voice.id.startsWith("youdao")) {
+                                    vm.speakCloudVoice("change", voice.id, voice.locale, cacheDir)
                                 } else {
                                     systemSpeaker.speakWithVoice("change", voice.id.removePrefix("sys_"))
                                 }
@@ -236,11 +283,14 @@ fun WordGlassApp(
                     }
                 }
                 // Bottom navigation sits on the page background; no scrim, no floating glass.
-                GlassBottomBar(
-                    selectedRoute = currentRoute,
-                    onSelect = { navController.navigateTab(it) },
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
+                // Only show bottom nav on main tab pages
+                if (currentRoute in setOf(Routes.HOME, Routes.STUDY, Routes.LIBRARY, Routes.PROFILE)) {
+                    GlassBottomBar(
+                        selectedRoute = currentRoute,
+                        onSelect = { navController.navigateTab(it) },
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
+                }
             }
         }
     }
@@ -255,6 +305,7 @@ private fun NavHostController.navigateTab(route: String) {
         restoreState = true
     }
 }
+
 
 
 
