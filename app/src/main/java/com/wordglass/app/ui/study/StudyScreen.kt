@@ -12,12 +12,15 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -279,18 +282,19 @@ private fun StudyModeSelector(
 ) {
     val colors = WgTheme.colors
     val haptics = LocalHapticFeedback.current
-    Row(
+    LazyRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 4.dp),
     ) {
-        StudyMode.entries.forEach { mode ->
+        items(StudyMode.entries.size) { index ->
+            val mode = StudyMode.entries[index]
             val active = mode == selected
             val icon = modeIcon(mode)
             Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(46.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .height(42.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
                         if (active) {
                             Brush.verticalGradient(listOf(colors.blue, colors.blueDeep))
@@ -314,7 +318,7 @@ private fun StudyModeSelector(
                             }
                         },
                     )
-                    .padding(horizontal = 4.dp),
+                    .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {

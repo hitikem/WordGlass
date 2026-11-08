@@ -176,8 +176,8 @@ fun GlassBottomBar(
                     .align(Alignment.BottomCenter)
                     .height(BAR_HEIGHT.dp)
                     .clip(barShape)
-                    .background(colors.navFill.copy(alpha = 0.55f))
-                    .border(0.8.dp, colors.glassStroke.copy(alpha = 0.35f), barShape),
+                    .background(colors.navFill.copy(alpha = 0.25f))
+                    .border(0.8.dp, colors.glassStroke.copy(alpha = 0.20f), barShape),
             ) {
                 Row(Modifier.fillMaxSize()) {
                     WgTabs.forEachIndexed { index, tab ->
