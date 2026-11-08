@@ -94,7 +94,38 @@ class StudyReminderReceiver : BroadcastReceiver() {
                 AlarmManager.INTERVAL_DAY,
                 pending,
             )
+
+            // Also schedule smart review check every 4 hours
+            val smartPending = PendingIntent.getBroadcast(
+                context,
+                SMART_REQUEST_CODE,
+                Intent(context, SmartReviewReceiver::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            alarm.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis() + 30 * 60 * 1000, // first check in 30 min
+                4 * 60 * 60 * 1000, // every 4 hours
+                smartPending,
+            )
         }
+
+        /** Cancel all reminders. */
+        fun cancelAll(context: Context) {
+            val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            alarm.cancel(PendingIntent.getBroadcast(
+                context, REQUEST_CODE,
+                Intent(context, StudyReminderReceiver::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            ))
+            alarm.cancel(PendingIntent.getBroadcast(
+                context, SMART_REQUEST_CODE,
+                Intent(context, SmartReviewReceiver::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            ))
+        }
+
+        const val SMART_REQUEST_CODE = 2002
     }
 }
 

@@ -371,6 +371,10 @@ fun HomeScreen(
         }
 
         item {
+            StudyCalendarCard(studiedDays = stats.studiedDaysInMonth)
+        }
+
+        item {
             Text(
                 text = "LOCAL ROOM · ${words.size} 个本地词条",
                 style = WgType.eyebrow,

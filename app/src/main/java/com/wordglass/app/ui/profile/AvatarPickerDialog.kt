@@ -253,7 +253,7 @@ private fun CropScreen(
                 contentScale = ContentScale.Crop,
             )
 
-            // Circle ring overlay - just draws the ring, doesn't block touches
+            // Circle ring overlay with dark mask outside circle
             androidx.compose.foundation.Canvas(
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -261,20 +261,17 @@ private fun CropScreen(
                 val cx = size.width / 2f
                 val cy = size.height / 2f
 
-                // Light darkening outside circle (not too dark, just enough to see)
-                drawRect(
-                    color = Color.Black.copy(alpha = 0.3f),
-                    size = size,
-                )
-
-                // Clear circle
+                // Dark overlay outside circle using Path with EvenOdd fill
                 val path = androidx.compose.ui.graphics.Path().apply {
+                    // Outer rectangle
+                    addRect(androidx.compose.ui.geometry.Rect(0f, 0f, size.width, size.height))
+                    // Inner circle (cutout)
                     addOval(androidx.compose.ui.geometry.Rect(cx - r, cy - r, cx + r, cy + r))
+                    fillType = androidx.compose.ui.graphics.PathFillType.EvenOdd
                 }
                 drawPath(
                     path = path,
-                    color = Color.Transparent,
-                    blendMode = androidx.compose.ui.graphics.BlendMode.Clear,
+                    color = Color.Black.copy(alpha = 0.5f),
                 )
 
                 // White circle ring
@@ -282,7 +279,7 @@ private fun CropScreen(
                     color = Color.White,
                     radius = r,
                     center = androidx.compose.ui.geometry.Offset(cx, cy),
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 4.dp.toPx()),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx()),
                 )
             }
         }

@@ -49,6 +49,7 @@ enum class StudyMode(val label: String, val eyebrow: String) {
     CHOICE("选择", "CHOICE"),
     DICTATION("听写", "TYPE"),
     SPELLING("拼写", "SPELL"),
+    PRONUNCIATION("跟读", "SPEAK"),
 }
 
 enum class StudyRating(val label: String, val shortLabel: String) {
@@ -88,6 +89,7 @@ data class DashboardStats(
     val planDailyWords: Int = 0,
     val wrongCount: Int = 0,
     val favoriteCount: Int = 0,
+    val studiedDaysInMonth: Set<Int> = emptySet(),
 ) {
     /** How many words remain to reach the goal. */
     val remainingToday: Int get() = (dailyGoal - completedToday).coerceAtLeast(0)

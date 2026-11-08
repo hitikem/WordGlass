@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Keyboard
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Style
@@ -174,6 +175,12 @@ fun StudyScreen(
                             onSpeak = onSpeak,
                             modifier = Modifier.fillMaxSize(),
                         )
+                        StudyMode.PRONUNCIATION -> PronunciationPracticeScreen(
+                            word = word,
+                            onSpeak = onSpeak,
+                            onDone = { vm.rate(com.wordglass.app.model.StudyRating.GOOD) },
+                            modifier = Modifier.fillMaxSize(),
+                        )
                         StudyMode.DICTATION -> DictationStudyMode(
                             word = word,
                             state = state,
@@ -321,6 +328,7 @@ private fun modeIcon(mode: StudyMode): ImageVector = when (mode) {
     StudyMode.CHOICE -> Icons.Rounded.Quiz
     StudyMode.DICTATION -> Icons.Rounded.Keyboard
     StudyMode.SPELLING -> Icons.Rounded.Edit
+    StudyMode.PRONUNCIATION -> Icons.Rounded.Mic
 }
 
 

@@ -6,9 +6,8 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.wordglass.app.WordGlassApplication
-import com.wordglass.app.data.PreviewData
-import com.wordglass.app.model.AppSettings
 import com.wordglass.app.model.DashboardStats
+import com.wordglass.app.model.AppSettings
 import com.wordglass.app.model.LibraryFilter
 import com.wordglass.app.model.LibrarySort
 import com.wordglass.app.model.StudyMode
@@ -165,11 +164,16 @@ class WordGlassViewModel(application: Application) : AndroidViewModel(applicatio
             planDailyWords = planDailyWords,
             wrongCount = words.count { it.wrongCount > 0 },
             favoriteCount = words.count { it.favorite },
+            studiedDaysInMonth = words.mapNotNull { it.lastReviewedAt }
+                .map { java.time.Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+                .filter { it.month == today.month && it.year == today.year }
+                .map { it.dayOfMonth }
+                .toSet(),
         )
     }.flowOn(Dispatchers.Default).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = PreviewData.dashboard.copy(completedToday = 0, dueCount = 0, totalLearned = 0, mastered = 0, streakDays = 0, weeklyMinutes = List(7) { 0 }),
+        initialValue = com.wordglass.app.model.DashboardStats(),
     )
 
     init {
@@ -552,6 +556,7 @@ sealed class SyncStatus {
     data object DownloadSuccess : SyncStatus()
     data class Error(val message: String) : SyncStatus()
 }
+
 
 
 
