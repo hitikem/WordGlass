@@ -50,6 +50,8 @@ enum class StudyMode(val label: String, val eyebrow: String) {
     DICTATION("听写", "TYPE"),
     SPELLING("拼写", "SPELL"),
     PRONUNCIATION("跟读", "SPEAK"),
+    HANDWRITING("手写", "WRITE"),
+    GAME("游戏", "PLAY"),
 }
 
 enum class StudyRating(val label: String, val shortLabel: String) {

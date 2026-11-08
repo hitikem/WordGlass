@@ -22,12 +22,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Style
+import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -178,7 +180,20 @@ fun StudyScreen(
                         StudyMode.PRONUNCIATION -> PronunciationPracticeScreen(
                             word = word,
                             onSpeak = onSpeak,
-                            onDone = { vm.rate(com.wordglass.app.model.StudyRating.GOOD) },
+                            onRate = vm::rate,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        StudyMode.HANDWRITING -> HandwritingPracticeScreen(
+                            word = word,
+                            onRate = vm::rate,
+                            onSpeak = onSpeak,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        StudyMode.GAME -> WordGameScreen(
+                            words = listOfNotNull(word),
+                            currentIndex = 0,
+                            onRate = vm::rate,
+                            onSpeak = onSpeak,
                             modifier = Modifier.fillMaxSize(),
                         )
                         StudyMode.DICTATION -> DictationStudyMode(
@@ -329,6 +344,8 @@ private fun modeIcon(mode: StudyMode): ImageVector = when (mode) {
     StudyMode.DICTATION -> Icons.Rounded.Keyboard
     StudyMode.SPELLING -> Icons.Rounded.Edit
     StudyMode.PRONUNCIATION -> Icons.Rounded.Mic
+    StudyMode.HANDWRITING -> Icons.Rounded.Brush
+    StudyMode.GAME -> Icons.Rounded.SportsEsports
 }
 
 
