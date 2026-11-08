@@ -97,6 +97,7 @@ fun LibraryScreen(
     val sort by vm.sort.collectAsStateWithLifecycle()
     var selectedWord by remember { mutableStateOf<Word?>(null) }
     var sortMenu by remember { mutableStateOf(false) }
+    var showImportDialog by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -290,6 +291,16 @@ fun LibraryScreen(
                 },
             )
         }
+    }
+
+    if (showImportDialog) {
+        ImportWordsDialog(
+            onDismiss = { showImportDialog = false },
+            onImport = { uri ->
+                // TODO: implement actual import
+                showImportDialog = false
+            },
+        )
     }
 }
 

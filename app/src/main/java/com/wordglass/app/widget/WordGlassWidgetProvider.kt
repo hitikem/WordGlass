@@ -28,10 +28,10 @@ class WordGlassWidgetProvider : AppWidgetProvider() {
         appWidgetIds: IntArray,
     ) {
         // Show placeholder immediately to avoid "loading" error
+        val sdf = SimpleDateFormat("M月d日", Locale.CHINESE)
         for (appWidgetId in appWidgetIds) {
             try {
                 val views = RemoteViews(context.packageName, R.layout.widget_wordglass)
-                val sdf = SimpleDateFormat("M月d日", Locale.CHINESE)
                 views.setTextViewText(R.id.widget_title, "WordGlass · ${sdf.format(Date())}")
                 views.setTextViewText(R.id.widget_progress, "加载中…")
                 views.setTextViewText(R.id.widget_due_count, "-")
@@ -51,7 +51,9 @@ class WordGlassWidgetProvider : AppWidgetProvider() {
                 views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
                 views.setOnClickPendingIntent(R.id.widget_action, pendingIntent)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+                // Silent fail - system will retry
+            }
         }
 
         // Load real data in background
@@ -69,8 +71,6 @@ class WordGlassWidgetProvider : AppWidgetProvider() {
                     val prefs = context.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
                     prefs.getInt("daily_goal", 25)
                 } catch (_: Exception) { 25 }
-
-                val sdf = SimpleDateFormat("M月d日", Locale.CHINESE)
 
                 for (appWidgetId in appWidgetIds) {
                     try {
@@ -100,5 +100,13 @@ class WordGlassWidgetProvider : AppWidgetProvider() {
                 // Keep placeholder visible on error
             }
         }
+    }
+
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
     }
 }
